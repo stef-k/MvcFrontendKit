@@ -1,5 +1,9 @@
 <Project>
 
+  <!-- Load the MSBuild task assembly -->
+  <UsingTask TaskName="MvcFrontendKit.Build.FrontendBundleTask"
+             AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net9.0\MvcFrontendKit.dll" />
+
   <!-- Hook into the Build process for Release configuration -->
   <Target Name="MvcFrontendKitBuild"
           BeforeTargets="Build"
@@ -13,9 +17,9 @@
     <Error Condition="!Exists('$(MvcFrontendKitConfigPath)')"
            Text="MvcFrontendKit: Config file not found at '$(MvcFrontendKitConfigPath)'. Run 'dotnet frontend init' to create it, or set MvcFrontendKitEnabled=false to disable bundling." />
 
-    <!-- TODO: Invoke the bundling MSBuild task here -->
-    <!-- This will be implemented in the MSBuild task -->
-    <Message Text="MvcFrontendKit: Bundling task not yet implemented. This will be completed in the bundling task." Importance="high" />
+    <!-- Invoke the bundling task -->
+    <FrontendBundleTask ProjectDirectory="$(MSBuildProjectDirectory)"
+                        ConfigPath="$(MvcFrontendKitConfigPath)" />
 
   </Target>
 

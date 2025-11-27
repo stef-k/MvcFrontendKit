@@ -8,9 +8,9 @@ namespace MvcFrontendKit.Bundling;
 
 public class EsbuildRunner
 {
-    private readonly ILogger<EsbuildRunner> _logger;
+    private readonly ILogger _logger;
 
-    public EsbuildRunner(ILogger<EsbuildRunner> logger)
+    public EsbuildRunner(ILogger logger)
     {
         _logger = logger;
     }
