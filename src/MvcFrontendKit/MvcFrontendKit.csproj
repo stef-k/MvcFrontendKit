@@ -4,13 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.1</Version>
-    <Authors>MvcFrontendKit Contributors</Authors>
+    <Version>1.0.0-preview.2</Version>
+    <Authors>stef-k</Authors>
     <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications using esbuild</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/yourusername/MvcFrontendKit</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/yourusername/MvcFrontendKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stef-k/MvcFrontendKit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/stef-k/MvcFrontendKit</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
