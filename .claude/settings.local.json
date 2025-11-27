@@ -15,7 +15,9 @@
       "Bash(GOOS=darwin GOARCH=amd64 go build:*)",
       "Bash(GOOS=darwin GOARCH=arm64 go build:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet test)"
     ],
     "deny": [],
     "ask": []
