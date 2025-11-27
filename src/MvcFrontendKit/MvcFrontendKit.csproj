@@ -34,4 +34,8 @@
     <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\frontend.config.template.yaml" />
+  </ItemGroup>
+
 </Project>

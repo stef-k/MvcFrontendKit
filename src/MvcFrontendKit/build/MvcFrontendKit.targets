@@ -1,0 +1,34 @@
+<Project>
+
+  <!-- Hook into the Build process for Release configuration -->
+  <Target Name="MvcFrontendKitBuild"
+          BeforeTargets="Build"
+          Condition="'$(MvcFrontendKitEnabled)' == 'true' AND ('$(Configuration)' == 'Release' OR '$(MvcFrontendKitSkipOnDebug)' != 'true')">
+
+    <Message Text="MvcFrontendKit: Bundling frontend assets..." Importance="high" />
+    <Message Text="  Config: $(MvcFrontendKitConfigPath)" Importance="normal" />
+    <Message Text="  Manifest: $(MvcFrontendKitManifestPath)" Importance="normal" />
+
+    <!-- Check if config file exists -->
+    <Error Condition="!Exists('$(MvcFrontendKitConfigPath)')"
+           Text="MvcFrontendKit: Config file not found at '$(MvcFrontendKitConfigPath)'. Run 'dotnet frontend init' to create it, or set MvcFrontendKitEnabled=false to disable bundling." />
+
+    <!-- TODO: Invoke the bundling MSBuild task here -->
+    <!-- This will be implemented in the MSBuild task -->
+    <Message Text="MvcFrontendKit: Bundling task not yet implemented. This will be completed in the bundling task." Importance="high" />
+
+  </Target>
+
+  <!-- Hook into Publish to ensure bundles are included -->
+  <Target Name="MvcFrontendKitPublish"
+          BeforeTargets="Publish"
+          Condition="'$(MvcFrontendKitEnabled)' == 'true'">
+
+    <Message Text="MvcFrontendKit: Preparing frontend assets for publish..." Importance="high" />
+
+    <!-- Ensure the bundling has run -->
+    <CallTarget Targets="MvcFrontendKitBuild" />
+
+  </Target>
+
+</Project>

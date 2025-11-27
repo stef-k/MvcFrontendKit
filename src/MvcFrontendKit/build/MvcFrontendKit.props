@@ -1,0 +1,17 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Enable MvcFrontendKit by default -->
+    <MvcFrontendKitEnabled Condition="'$(MvcFrontendKitEnabled)' == ''">true</MvcFrontendKitEnabled>
+
+    <!-- Config file path (default: frontend.config.yaml at project root) -->
+    <MvcFrontendKitConfigPath Condition="'$(MvcFrontendKitConfigPath)' == ''">$(MSBuildProjectDirectory)\frontend.config.yaml</MvcFrontendKitConfigPath>
+
+    <!-- Only run in Release builds by default -->
+    <MvcFrontendKitSkipOnDebug Condition="'$(MvcFrontendKitSkipOnDebug)' == ''">true</MvcFrontendKitSkipOnDebug>
+
+    <!-- Manifest output path -->
+    <MvcFrontendKitManifestPath Condition="'$(MvcFrontendKitManifestPath)' == ''">$(MSBuildProjectDirectory)\wwwroot\frontend.manifest.json</MvcFrontendKitManifestPath>
+  </PropertyGroup>
+
+</Project>
