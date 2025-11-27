@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln add:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(go version:*)",
+      "Bash(git clone:*)",
+      "Bash(GOOS=windows GOARCH=amd64 go build:*)",
+      "Bash(GOOS=linux GOARCH=amd64 go build:*)",
+      "Bash(GOOS=linux GOARCH=arm64 go build:*)",
+      "Bash(GOOS=darwin GOARCH=amd64 go build:*)",
+      "Bash(GOOS=darwin GOARCH=arm64 go build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
