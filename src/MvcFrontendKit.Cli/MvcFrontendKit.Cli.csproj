@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>frontend</ToolCommandName>
-    <Version>1.0.0-preview.2</Version>
+    <ToolCommandName>dotnet-frontend</ToolCommandName>
+    <Version>1.0.0-preview.3</Version>
     <Authors>stef-k</Authors>
     <Description>CLI tool for MvcFrontendKit - init config and check assets</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend;cli</PackageTags>
@@ -15,10 +15,15 @@
     <RepositoryUrl>https://github.com/stef-k/MvcFrontendKit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/stef-k/MvcFrontendKit</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MvcFrontendKit\MvcFrontendKit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,11 @@
       "Bash(dotnet run:*)",
       "Bash(dotnet test)",
       "Bash(dotnet pack:*)",
-      "Bash(dotnet nuget push:*)"
+      "Bash(dotnet nuget push:*)",
+      "Bash(dotnet tool install:*)",
+      "Bash(dotnet tool update:*)",
+      "Bash(dotnet tool list:*)",
+      "Bash(frontend --help:*)"
     ],
     "deny": [],
     "ask": []
