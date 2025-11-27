@@ -47,22 +47,13 @@ public class InitCommand
     private static string? GetEmbeddedTemplate()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = "MvcFrontendKit.Templates.frontend.config.template.yaml";
+        var resourceName = "MvcFrontendKit.Cli.Templates.frontend.config.template.yaml";
 
-        var libAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(a => a.GetName().Name == "MvcFrontendKit");
-
-        if (libAssembly == null)
-        {
-            Console.Error.WriteLine("Error: Could not load MvcFrontendKit assembly");
-            return null;
-        }
-
-        using var stream = libAssembly.GetManifestResourceStream(resourceName);
+        using var stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null)
         {
             Console.Error.WriteLine($"Error: Template resource not found: {resourceName}");
-            var resources = libAssembly.GetManifestResourceNames();
+            var resources = assembly.GetManifestResourceNames();
             Console.Error.WriteLine("Available resources:");
             foreach (var res in resources)
             {

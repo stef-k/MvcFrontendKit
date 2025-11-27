@@ -1,0 +1,121 @@
+# MvcFrontendKit Configuration
+# Schema version for future migration / breaking changes
+configVersion: 1
+
+# JS bundling mode:
+# - single : single global JS bundle
+# - areas  : per-area JS bundles + site-wide bundle
+# - views  : per-view JS bundles + site-wide bundle (default/recommended)
+mode: views
+
+# Application base path for sub-path deployments:
+# - "/"        : app hosted at e.g. https://example.com/
+# - "/hr-app"  : app hosted at e.g. https://example.com/hr-app/
+appBasePath: "/"
+
+# Root physical directories (relative to project root)
+webRoot: wwwroot
+jsRoot: wwwroot/js
+cssRoot: wwwroot/css
+libRoot: wwwroot/lib
+
+# Dist URL structure for built assets
+distUrlRoot: /dist
+distJsSubPath: js
+distCssSubPath: css
+
+# Output cleaning strategy
+output:
+  # Clear dist/js and dist/css before building (recommended)
+  cleanDistOnBuild: true
+
+# CSS URL & @import policy
+cssUrlPolicy:
+  # If false (recommended), relative URLs like "../" in CSS will cause build failure
+  # Use root-relative URLs like "/img/foo.png" instead
+  allowRelative: false
+
+  # If true (default), @import statements are resolved inline by esbuild
+  resolveImports: true
+
+# Dev-time import map for bare module specifiers
+importMap:
+  enabled: true
+
+  # Strategy for Production:
+  # - "bundle"   : esbuild bundles these modules (default, no runtime import map needed)
+  # - "external" : modules treated as external, runtime import map required
+  prodStrategy: "bundle"
+
+  # Map bare-module-name -> URL (Development only)
+  entries:
+    # Example: uncomment to use Vue from /lib
+    # vue: "/lib/vue/vue.esm-browser.js"
+
+# Global site assets (included on every page)
+global:
+  js:
+    - wwwroot/js/site.js
+
+  css:
+    - wwwroot/css/site.css
+
+# Per-view conventions and overrides
+views:
+  # Enable auto-discovery of JS files by convention
+  jsAutoLinkByConvention: true
+
+  # Enable auto-discovery of CSS files by convention
+  cssAutoLinkByConvention: true
+
+  # JS conventions: map view paths to JS base paths
+  conventions:
+    # Views/Home/Index.cshtml -> wwwroot/js/Home/Index*.js
+    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+      scriptBasePattern: "wwwroot/js/{Controller}/{Action}"
+
+    # Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/js/Areas/Admin/Settings/Index*.js
+    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+      scriptBasePattern: "wwwroot/js/Areas/{Area}/{Controller}/{Action}"
+
+  # CSS conventions: map view paths to CSS files
+  cssConventions:
+    # Views/Home/Index.cshtml -> wwwroot/css/Home/Index.css
+    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+      cssPattern: "wwwroot/css/{Controller}/{Action}.css"
+
+    # Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/css/Areas/Admin/Settings/Index.css
+    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+      cssPattern: "wwwroot/css/Areas/{Area}/{Controller}/{Action}.css"
+
+  # Explicit overrides (takes precedence over conventions)
+  overrides:
+    # Example: Uncomment to override specific views
+    # "Areas/Admin/Settings/Index":
+    #   js:
+    #     - "wwwroot/js/custom/admin-settings.js"
+    #   css:
+    #     - "wwwroot/css/custom/admin-settings.css"
+
+# Shared components for partials/views
+components:
+  # Example components (customize for your app):
+  # calendar:
+  #   js:
+  #     - "wwwroot/js/components/calendar.js"
+  #   css:
+  #     - "wwwroot/css/components/calendar.css"
+  #
+  # datepicker:
+  #   js:
+  #     - "wwwroot/js/components/datepicker.js"
+  #   css:
+  #     - "wwwroot/css/components/datepicker.css"
+  #   depends:
+  #     - "calendar"
+
+# Esbuild tuning (optional, most projects use defaults)
+esbuild:
+  jsTarget: "es2020"
+  jsSourcemap: true
+  cssSourcemap: true
