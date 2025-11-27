@@ -6,7 +6,7 @@
 [![NuGet - MvcFrontendKit.Cli](https://img.shields.io/nuget/v/MvcFrontendKit.Cli.svg?label=MvcFrontendKit.Cli)](https://www.nuget.org/packages/MvcFrontendKit.Cli/)
 [![NuGet - MvcFrontendKit.Cli Downloads](https://img.shields.io/nuget/dt/MvcFrontendKit.Cli.svg?label=downloads)](https://www.nuget.org/packages/MvcFrontendKit.Cli/)
 
-**MvcFrontendKit** is a Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications.
+**MvcFrontendKit** is a Node.js-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications.
 
 It wraps `esbuild` behind a simple `.NET + YAML` workflow:
 
@@ -18,7 +18,7 @@ It wraps `esbuild` behind a simple `.NET + YAML` workflow:
 
 This is for ASP.NET devs who want modern bundling without committing to the full Node toolchain.
 
-> **Status:** v1.0.0-preview.1 - Core implementation complete. Production-ready for early adopters. Expect breaking changes until v1.0.
+> **Status:** v1.0.0-preview.x - Core implementation complete. Production-ready for early adopters. Expect breaking changes until v1.0.
 
 ## Installation
 
