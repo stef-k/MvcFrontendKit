@@ -1,5 +1,11 @@
 # MvcFrontendKit
 
+[![NuGet - MvcFrontendKit](https://img.shields.io/nuget/v/MvcFrontendKit.svg?label=MvcFrontendKit)](https://www.nuget.org/packages/MvcFrontendKit/)
+[![NuGet - MvcFrontendKit Downloads](https://img.shields.io/nuget/dt/MvcFrontendKit.svg?label=downloads)](https://www.nuget.org/packages/MvcFrontendKit/)
+
+[![NuGet - MvcFrontendKit.Cli](https://img.shields.io/nuget/v/MvcFrontendKit.Cli.svg?label=MvcFrontendKit.Cli)](https://www.nuget.org/packages/MvcFrontendKit.Cli/)
+[![NuGet - MvcFrontendKit.Cli Downloads](https://img.shields.io/nuget/dt/MvcFrontendKit.Cli.svg?label=downloads)](https://www.nuget.org/packages/MvcFrontendKit.Cli/)
+
 **MvcFrontendKit** is a Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications.
 
 It wraps `esbuild` behind a simple `.NET + YAML` workflow:
