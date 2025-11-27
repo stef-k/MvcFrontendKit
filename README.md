@@ -12,7 +12,72 @@ It wraps `esbuild` behind a simple `.NET + YAML` workflow:
 
 This is for ASP.NET devs who want modern bundling without committing to the full Node toolchain.
 
-> **Status:** Design/spec complete, implementation starting. Expect breaking changes until v1.0.
+> **Status:** v1.0.0-preview.1 - Core implementation complete. Production-ready for early adopters. Expect breaking changes until v1.0.
+
+## Installation
+
+### 1. Install the NuGet packages
+
+```bash
+# Install the main library
+dotnet add package MvcFrontendKit
+
+# Install the CLI tool (optional but recommended)
+dotnet tool install --global MvcFrontendKit.Cli
+```
+
+### 2. Generate configuration
+
+```bash
+# Creates frontend.config.yaml with sensible defaults
+dotnet frontend init
+```
+
+### 3. Register services in Program.cs
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+
+// Add MvcFrontendKit services
+builder.Services.AddMvcFrontendKit();
+
+var app = builder.Build();
+// ... rest of your app configuration
+```
+
+### 4. Update your layout
+
+Add helpers to your `_Layout.cshtml` or equivalent:
+
+```cshtml
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - MyApp</title>
+
+    @* Dev: import map for bare imports, Prod: bundled *@
+    @Html.FrontendImportMap()
+
+    @* Global + view-specific CSS *@
+    @Html.FrontendGlobalStyles()
+    @Html.FrontendViewStyles()
+</head>
+<body>
+    @RenderBody()
+
+    @* Global + view-specific JS *@
+    @Html.FrontendGlobalScripts()
+    @Html.FrontendViewScripts()
+
+    @RenderSection("Scripts", required: false)
+</body>
+```
+
+### 5. Develop and build
+
+- **Development:** Run `dotnet run` or `dotnet watch`. Raw files served from `wwwroot` with cache-busting.
+- **Production:** Run `dotnet publish -c Release`. Bundles built automatically to `wwwroot/dist` with `frontend.manifest.json`.
 
 ---
 
