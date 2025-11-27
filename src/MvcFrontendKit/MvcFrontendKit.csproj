@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.2</Version>
+    <Version>1.0.0-preview.5</Version>
     <Authors>stef-k</Authors>
     <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications using esbuild</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend</PackageTags>
@@ -17,12 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <!-- Use minimum version ranges to support .NET 9+ -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Razor.Runtime" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor" Version="2.2.0" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.4" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     <PackageReference Include="YamlDotNet" Version="16.2.1" />
   </ItemGroup>
 
