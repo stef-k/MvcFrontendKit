@@ -17,7 +17,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(dotnet run:*)",
-      "Bash(dotnet test)"
+      "Bash(dotnet test)",
+      "Bash(dotnet pack:*)"
     ],
     "deny": [],
     "ask": []
