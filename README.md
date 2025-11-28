@@ -1,6 +1,7 @@
 # MvcFrontendKit
 
 [![CI](https://github.com/stef-k/MvcFrontendKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stef-k/MvcFrontendKit/actions/workflows/ci.yml)
+
 [![NuGet - MvcFrontendKit](https://img.shields.io/nuget/v/MvcFrontendKit.svg?label=MvcFrontendKit)](https://www.nuget.org/packages/MvcFrontendKit/)
 [![NuGet - MvcFrontendKit Downloads](https://img.shields.io/nuget/dt/MvcFrontendKit.svg?label=downloads)](https://www.nuget.org/packages/MvcFrontendKit/)
 
