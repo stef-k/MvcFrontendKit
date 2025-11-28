@@ -206,6 +206,96 @@ See **`SPEC.md`** for the full formal specification.
 
 ---
 
+## CLI Commands
+
+The CLI tool provides diagnostics and build utilities:
+
+```bash
+# Initialize configuration
+dotnet frontend init
+dotnet frontend init --force    # Overwrite existing
+
+# Validate configuration and assets
+dotnet frontend check           # Basic check
+dotnet frontend check --verbose # Detailed output
+dotnet frontend check --all     # Check all discoverable views
+dotnet frontend check --view "Areas/Admin/Settings/Index"  # Diagnose specific view
+
+# Build preview (dry-run)
+dotnet frontend build --dry-run # Preview bundles without building
+```
+
+### View Diagnostics (`--view` and `--all`)
+
+When a view's JS/CSS isn't loading, use diagnostics to understand why:
+
+```bash
+dotnet frontend check --view "Areas/Admin/Settings/Index"
+```
+
+Output shows:
+- Resolution method (explicit override vs convention)
+- Matched convention pattern
+- Files found/expected
+- Import validation results
+- What would be bundled in production
+
+### Import Path Validation
+
+The check command automatically validates relative imports in JS files:
+
+```javascript
+// These imports are validated:
+import { helper } from './utils.js';
+import shared from '../shared/common.js';
+
+// Broken imports are reported:
+//   ✗ Broken import in index.js: ./missing-file.js
+```
+
+Use `--skip-imports` to disable import validation.
+
+### Build Preview (`--dry-run`)
+
+Preview what will be bundled without actually building:
+
+```bash
+dotnet frontend build --dry-run
+```
+
+Shows:
+- All bundles that would be created
+- Input files and sizes
+- Estimated output sizes after minification
+
+---
+
+## Debug Helper
+
+For troubleshooting view asset resolution during development, add `@Html.FrontendDebugInfo()` to your layout:
+
+```cshtml
+<body>
+    @RenderBody()
+
+    @Html.FrontendGlobalScripts()
+    @Html.FrontendViewScripts()
+
+    @* Shows debug panel in Development environment only *@
+    @Html.FrontendDebugInfo()
+</body>
+```
+
+The debug panel displays:
+- Current view key
+- Manifest key
+- Resolved JS/CSS files
+- Whether using production manifest or development mode
+
+**Note:** The helper renders nothing in Production environment, so it's safe to leave in your layout.
+
+---
+
 ## Upgrading
 
 MvcFrontendKit automatically handles most upgrade scenarios. When you update to a new version:

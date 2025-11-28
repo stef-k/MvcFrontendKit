@@ -36,7 +36,8 @@
       "Bash(powershell:*)",
       "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\")",
       "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\build-output\\tasks\\net472\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

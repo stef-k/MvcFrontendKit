@@ -132,6 +132,65 @@ public static class FrontendHtmlHelpers
         return RenderDevScripts(devJsFiles, environment, config);
     }
 
+    /// <summary>
+    /// Renders debug information about the current view's frontend asset resolution.
+    /// Only renders output in Development environment.
+    /// </summary>
+    public static IHtmlContent FrontendDebugInfo(this IHtmlHelper html)
+    {
+        var services = html.ViewContext.HttpContext.RequestServices;
+        var environment = services.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+
+        // Only show in Development
+        if (!environment.EnvironmentName.Equals("Development", StringComparison.OrdinalIgnoreCase))
+        {
+            return HtmlString.Empty;
+        }
+
+        var manifestProvider = services.GetRequiredService<IFrontendManifestProvider>();
+        var configProvider = services.GetRequiredService<IFrontendConfigProvider>();
+        var config = configProvider.GetConfig();
+        var manifest = manifestProvider.GetManifest();
+
+        var viewKey = ViewKeyResolver.ResolveViewKey(html.ViewContext);
+        var isProduction = manifest != null;
+
+        var resolver = new AssetResolver(environment, config);
+        var jsFiles = isProduction
+            ? manifest!.GetViewJs(viewKey)
+            : resolver.ResolveViewJs(viewKey);
+        var cssFiles = isProduction
+            ? manifest!.GetViewCss(viewKey)
+            : resolver.ResolveViewCss(viewKey);
+
+        var debugHtml = $@"
+<!-- MvcFrontendKit Debug Info -->
+<div style=""position:fixed;bottom:10px;right:10px;background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:6px;font-family:monospace;font-size:12px;max-width:400px;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,0.3);"">
+  <div style=""font-weight:bold;color:#569cd6;margin-bottom:8px;"">🔧 MvcFrontendKit Debug</div>
+  <div style=""margin:4px 0;""><span style=""color:#9cdcfe;"">Mode:</span> <span style=""color:#ce9178;"">{(isProduction ? "Production (manifest)" : "Development (raw files)")}</span></div>
+  <div style=""margin:4px 0;""><span style=""color:#9cdcfe;"">View Key:</span> <span style=""color:#ce9178;"">{HtmlEncoder.Default.Encode(viewKey ?? "(none)")}</span></div>
+  <div style=""margin:4px 0;""><span style=""color:#9cdcfe;"">Manifest Key:</span> <span style=""color:#ce9178;"">view:{HtmlEncoder.Default.Encode(viewKey ?? "")}</span></div>
+  <div style=""margin:8px 0 4px 0;color:#4ec9b0;"">JS Files ({jsFiles?.Count ?? 0}):</div>
+  {RenderDebugFileList(jsFiles)}
+  <div style=""margin:8px 0 4px 0;color:#4ec9b0;"">CSS Files ({cssFiles?.Count ?? 0}):</div>
+  {RenderDebugFileList(cssFiles)}
+  <div style=""margin-top:8px;font-size:10px;color:#6a9955;""><!-- Remove @Html.FrontendDebugInfo() for production --></div>
+</div>";
+
+        return new HtmlString(debugHtml);
+    }
+
+    private static string RenderDebugFileList(List<string>? files)
+    {
+        if (files == null || !files.Any())
+        {
+            return "<div style=\"color:#808080;margin-left:8px;\">(none)</div>";
+        }
+
+        return string.Join("", files.Select(f =>
+            $"<div style=\"color:#dcdcaa;margin-left:8px;word-break:break-all;\">{HtmlEncoder.Default.Encode(f)}</div>"));
+    }
+
     public static IHtmlContent FrontendInclude(this IHtmlHelper html, string componentName)
     {
         var services = html.ViewContext.HttpContext.RequestServices;
