@@ -82,3 +82,10 @@ Desktop.ini
 *.temp
 *.log
 *.cache
+
+# Windows reserved names (can be created by build tools)
+nul
+NUL
+
+# Local NuGet packages output
+nupkgs/
