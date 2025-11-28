@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-frontend</ToolCommandName>
-    <Version>1.0.0-preview.10</Version>
+    <Version>1.0.0-preview.11</Version>
     <Authors>stef-k</Authors>
     <Description>CLI tool for MvcFrontendKit - init config and check assets</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend;cli</PackageTags>

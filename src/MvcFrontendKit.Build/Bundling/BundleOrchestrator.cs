@@ -73,7 +73,13 @@ public class BundleOrchestrator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Frontend bundle process failed");
+            _logger.LogError("Frontend bundle process failed: {Message}", ex.Message);
+            _logger.LogError("Exception type: {Type}", ex.GetType().FullName);
+            if (ex.InnerException != null)
+            {
+                _logger.LogError("Inner exception: {Inner}", ex.InnerException.Message);
+            }
+            _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
             return false;
         }
     }
@@ -151,6 +157,18 @@ public class BundleOrchestrator
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Building in views mode...");
+        _logger.LogInformation("  Global JS files: {Count}", _config.Global.Js.Count);
+        foreach (var js in _config.Global.Js)
+        {
+            _logger.LogInformation("    - {File}", js);
+        }
+        _logger.LogInformation("  Global CSS files: {Count}", _config.Global.Css.Count);
+        foreach (var css in _config.Global.Css)
+        {
+            _logger.LogInformation("    - {File}", css);
+        }
+        _logger.LogInformation("  View overrides: {Count}", _config.Views.Overrides.Count);
+        _logger.LogInformation("  Components: {Count}", _config.Components.Count);
 
         if (_config.Global.Js.Any())
         {
@@ -273,7 +291,20 @@ public class BundleOrchestrator
         string outFile,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Building JS bundle: {OutFile}", outFile);
+        _logger.LogInformation("  Entry files ({Count}):", entryFiles.Count);
+        foreach (var entry in entryFiles)
+        {
+            _logger.LogInformation("    - {Entry}", entry);
+        }
+
         var absoluteEntries = entryFiles.Select(f => Path.Combine(_projectRoot, f)).ToList();
+        _logger.LogInformation("  Absolute paths:");
+        foreach (var entry in absoluteEntries)
+        {
+            var exists = File.Exists(entry);
+            _logger.LogInformation("    - {Entry} (exists: {Exists})", entry, exists);
+        }
 
         var missingFiles = absoluteEntries.Where(f => !File.Exists(f)).ToList();
         if (missingFiles.Any())
@@ -323,7 +354,20 @@ public class BundleOrchestrator
         string outFile,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Building CSS bundle: {OutFile}", outFile);
+        _logger.LogInformation("  CSS files ({Count}):", cssFiles.Count);
+        foreach (var css in cssFiles)
+        {
+            _logger.LogInformation("    - {File}", css);
+        }
+
         var absoluteFiles = cssFiles.Select(f => Path.Combine(_projectRoot, f)).ToList();
+        _logger.LogInformation("  Absolute paths:");
+        foreach (var file in absoluteFiles)
+        {
+            var exists = File.Exists(file);
+            _logger.LogInformation("    - {File} (exists: {Exists})", file, exists);
+        }
 
         var missingFiles = absoluteFiles.Where(f => !File.Exists(f)).ToList();
         if (missingFiles.Any())

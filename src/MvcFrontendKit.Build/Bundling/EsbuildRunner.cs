@@ -38,7 +38,9 @@ public class EsbuildRunner
         }
 
         var arguments = BuildArguments(options);
-        _logger.LogDebug("Running esbuild: {Path} {Arguments}", esbuildPath, arguments);
+        _logger.LogInformation("Running esbuild: {Path}", esbuildPath);
+        _logger.LogInformation("  Arguments: {Arguments}", arguments);
+        _logger.LogInformation("  Working directory: {WorkingDir}", options.WorkingDirectory ?? Directory.GetCurrentDirectory());
 
         var startInfo = new ProcessStartInfo
         {
@@ -111,9 +113,46 @@ public class EsbuildRunner
         }
 
         var fileName = rid.StartsWith("win") ? "esbuild.exe" : "esbuild";
-        var esbuildPath = Path.Combine(assemblyDir, "runtimes", rid, "native", fileName);
 
-        return esbuildPath;
+        // Try multiple locations:
+        // 1. Direct runtimes folder (development/local builds)
+        // 2. NuGet package structure: tasks/net9.0/ -> ../../runtimes/ (package root)
+        // 3. NuGet package structure: tasks/net472/ -> ../../runtimes/
+
+        var searchPaths = new List<string>
+        {
+            // Direct (development)
+            Path.Combine(assemblyDir, "runtimes", rid, "native", fileName),
+            // NuGet package structure (assembly is in tasks/netX.X/)
+            Path.Combine(assemblyDir, "..", "..", "runtimes", rid, "native", fileName),
+            // Alternative: go up from tasks folder
+            Path.Combine(assemblyDir, "..", "runtimes", rid, "native", fileName)
+        };
+
+        foreach (var path in searchPaths)
+        {
+            var normalizedPath = Path.GetFullPath(path);
+            _logger.LogDebug("Checking esbuild path: {Path}", normalizedPath);
+            if (File.Exists(normalizedPath))
+            {
+                _logger.LogInformation("Found esbuild at: {Path}", normalizedPath);
+                return normalizedPath;
+            }
+        }
+
+        // Log all attempted paths for debugging
+        _logger.LogError("Esbuild binary not found. Searched paths:");
+        foreach (var path in searchPaths)
+        {
+            _logger.LogError("  - {Path} (exists: {Exists})", Path.GetFullPath(path), File.Exists(Path.GetFullPath(path)));
+        }
+        _logger.LogError("Assembly location: {Location}", assemblyLocation);
+        _logger.LogError("Assembly directory: {Dir}", assemblyDir);
+
+        throw new FileNotFoundException(
+            $"Esbuild binary not found for {rid}. " +
+            $"Assembly location: {assemblyLocation}. " +
+            "Make sure the MvcFrontendKit NuGet package is properly installed with all runtime dependencies.");
     }
 
     private string GetRuntimeIdentifier()
