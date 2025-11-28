@@ -1,8 +1,8 @@
 <Project>
 
-  <!-- Load the MSBuild task assembly -->
+  <!-- Load the MSBuild task assembly from the separate netstandard2.0 build task -->
   <UsingTask TaskName="MvcFrontendKit.Build.FrontendBundleTask"
-             AssemblyFile="$(MSBuildThisFileDirectory)..\lib\net9.0\MvcFrontendKit.dll" />
+             AssemblyFile="$(MSBuildThisFileDirectory)..\tasks\netstandard2.0\MvcFrontendKit.Build.dll" />
 
   <!-- Hook into the Build process for Release configuration -->
   <Target Name="MvcFrontendKitBuild"

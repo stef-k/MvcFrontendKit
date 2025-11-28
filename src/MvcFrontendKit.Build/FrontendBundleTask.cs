@@ -1,7 +1,9 @@
+using System;
+using System.IO;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using MvcFrontendKit.Bundling;
-using MvcFrontendKit.Configuration;
+using MvcFrontendKit.Build.Bundling;
+using MvcFrontendKit.Build.Configuration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using MSBuildTask = Microsoft.Build.Utilities.Task;
