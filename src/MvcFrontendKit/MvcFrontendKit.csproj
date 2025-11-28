@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.19</Version>
+    <Version>1.0.0-preview.20</Version>
     <Authors>stef-k</Authors>
     <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications using esbuild</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend</PackageTags>

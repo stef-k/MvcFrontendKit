@@ -25,11 +25,17 @@
 
     CRITICAL: We must run BEFORE ResolveStaticWebAssetsInputs so that our
     generated bundles in wwwroot/dist are included in the static web assets manifest.
+
+    IMPORTANT: We must NOT run during Publish phase. The bundles are created during Build
+    and the StaticWebAssets system references them by hash. Re-bundling during Publish
+    creates different hashes, breaking the manifest references.
+
+    Detection: During Publish, _IsPublishing is set to true by the SDK.
   -->
   <Target Name="MvcFrontendKitBuild"
           AfterTargets="ResolveProjectReferences"
           BeforeTargets="ResolveStaticWebAssetsInputs;AssignTargetPaths"
-          Condition="'$(MvcFrontendKitEnabled)' == 'true' AND ('$(Configuration)' == 'Release' OR '$(MvcFrontendKitSkipOnDebug)' != 'true')">
+          Condition="'$(MvcFrontendKitEnabled)' == 'true' AND '$(_IsPublishing)' != 'true' AND ('$(Configuration)' == 'Release' OR '$(MvcFrontendKitSkipOnDebug)' != 'true')">
 
     <Message Text="MvcFrontendKit: Bundling frontend assets..." Importance="high" />
     <Message Text="  Config: $(MvcFrontendKitConfigPath)" Importance="normal" />
@@ -61,13 +67,25 @@
 
   </Target>
 
-  <!-- Hook into Publish to ensure bundles are included -->
+  <!--
+    Publish target: Verify bundles exist but do NOT re-bundle.
+
+    The bundles were created during Build and are referenced by hash in
+    staticwebassets.build.json. Re-bundling would create different hashes
+    and break the StaticWebAssets manifest.
+
+    This target only verifies the bundles exist and logs a message.
+    The actual inclusion of bundles is handled by StaticWebAssets from the Build phase.
+  -->
   <Target Name="MvcFrontendKitPublish"
           BeforeTargets="PrepareForPublish"
-          DependsOnTargets="MvcFrontendKitBuild"
           Condition="'$(MvcFrontendKitEnabled)' == 'true'">
 
-    <Message Text="MvcFrontendKit: Preparing frontend assets for publish..." Importance="high" />
+    <Message Text="MvcFrontendKit: Using frontend assets from build phase..." Importance="high" />
+
+    <!-- Verify the manifest exists from Build phase -->
+    <Warning Condition="!Exists('$(MvcFrontendKitManifestPath)')"
+             Text="MvcFrontendKit: frontend.manifest.json not found. Run 'dotnet build -c Release' before publish." />
 
   </Target>
 
