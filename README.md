@@ -270,9 +270,32 @@ Shows:
 
 ---
 
-## Debug Helper
+## Debugging
 
-For troubleshooting view asset resolution during development, add `@Html.FrontendDebugInfo()` to your layout:
+MvcFrontendKit provides two debugging mechanisms to help troubleshoot asset resolution issues during development.
+
+### HTML Debug Comments (automatic)
+
+In the **Development** environment, all HTML helpers automatically emit HTML comments showing resolution details:
+
+```html
+<!-- MvcFrontendKit:FrontendViewScripts - Development mode | View: Views/Home/Index | Resolution: Convention | 1 file(s) -->
+<!--   wwwroot/js/Home/Index.js -->
+<script type="module" src="/js/Home/Index.js?v=638123456789"></script>
+```
+
+These comments show:
+- **Helper name**: Which helper generated the output
+- **Mode**: Development (raw files) or Production (manifest)
+- **View key**: The resolved view key (e.g., `Views/Home/Index`)
+- **Resolution method**: Override (from config) or Convention (auto-discovered)
+- **File list**: All files being loaded
+
+**Note:** Debug comments are automatically suppressed in Production—no configuration needed.
+
+### Debug Panel (`@Html.FrontendDebugInfo()`)
+
+For a visual debug overlay, add `@Html.FrontendDebugInfo()` to your layout:
 
 ```cshtml
 <body>

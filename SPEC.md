@@ -627,6 +627,49 @@ This guarantees that components used in multiple partials don’t cause duplicat
   - Dedup logic prevents cycles from causing infinite recursion, but:
     - `dotnet frontend check --verbose` should analyze component dependencies and warn about cycles.
 
+### 7.8 Debugging helpers
+
+#### 7.8.1 Automatic HTML debug comments
+
+In **Development environment only**, all helpers emit HTML comments providing diagnostic information about asset resolution:
+
+```html
+<!-- MvcFrontendKit:FrontendViewScripts - Development mode | View: Views/Home/Index | Resolution: Convention | 1 file(s) -->
+<!--   wwwroot/js/Home/Index.js -->
+<script type="module" src="/js/Home/Index.js?v=638123456789"></script>
+```
+
+Comment contents vary by helper and include:
+- **Helper name**: Which helper generated the output
+- **Mode**: "Development mode" (raw files) or "Production mode" (manifest)
+- **View key**: For view-specific helpers, the resolved view key
+- **Resolution method**: "Override" (explicit config) or "Convention" (auto-discovered)
+- **File count**: Number of files being loaded
+- **File list**: Each file path on a separate comment line
+
+Behavior:
+- Debug comments are **automatically emitted** when `IWebHostEnvironment.EnvironmentName` equals "Development" (case-insensitive)
+- In Production environment, no debug comments are emitted—only the actual `<script>` and `<link>` tags
+- No configuration flag is required; behavior is entirely environment-driven
+- When a helper outputs nothing (e.g., no view-specific files found), a single comment explaining why is emitted in Development
+
+#### 7.8.2 `FrontendDebugInfo()`
+
+A visual debug helper that renders a floating panel showing current asset resolution state:
+
+```cshtml
+@Html.FrontendDebugInfo()
+```
+
+- **Dev**: Renders a fixed-position panel (bottom-right) with:
+  - Current view key
+  - Manifest key format
+  - List of resolved JS and CSS files
+  - Mode indicator (Development/Production)
+- **Prod**: Returns `HtmlString.Empty` (no output)
+
+This helper is optional and intended for development troubleshooting. It can safely remain in layout files as it renders nothing in Production.
+
 ---
 
 ## 8. Dev vs Prod Behavior (recap)
