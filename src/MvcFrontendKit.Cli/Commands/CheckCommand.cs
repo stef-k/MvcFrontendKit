@@ -932,10 +932,7 @@ public class CheckCommand
 
     private static string GetRelativePath(string relativeTo, string path)
     {
-        var relativeToUri = new Uri(relativeTo.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar);
-        var pathUri = new Uri(path);
-        var relativeUri = relativeToUri.MakeRelativeUri(pathUri);
-        return Uri.UnescapeDataString(relativeUri.ToString().Replace('/', Path.DirectorySeparatorChar));
+        return Path.GetRelativePath(relativeTo, path);
     }
 
     #endregion
