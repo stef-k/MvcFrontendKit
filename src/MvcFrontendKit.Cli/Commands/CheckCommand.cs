@@ -76,7 +76,10 @@ public class CheckCommand
 
         Console.WriteLine("Global Assets:");
 
-        foreach (var jsFile in config.Global.Js)
+        var globalJs = config.Global?.Js ?? new List<string>();
+        var globalCss = config.Global?.Css ?? new List<string>();
+
+        foreach (var jsFile in globalJs)
         {
             if (!File.Exists(jsFile))
             {
@@ -89,7 +92,7 @@ public class CheckCommand
             }
         }
 
-        foreach (var cssFile in config.Global.Css)
+        foreach (var cssFile in globalCss)
         {
             if (!File.Exists(cssFile))
             {
@@ -104,7 +107,7 @@ public class CheckCommand
 
         if (errors == 0 && !verbose)
         {
-            Console.WriteLine($"  ✓ {config.Global.Js.Count} JS, {config.Global.Css.Count} CSS");
+            Console.WriteLine($"  ✓ {globalJs.Count} JS, {globalCss.Count} CSS");
         }
 
         Console.WriteLine();
@@ -115,7 +118,9 @@ public class CheckCommand
     {
         var errors = 0;
 
-        if (!config.Views.Overrides.Any())
+        var overrides = config.Views?.Overrides ?? new Dictionary<string, ViewOverride>();
+
+        if (!overrides.Any())
         {
             if (verbose)
             {
@@ -127,14 +132,17 @@ public class CheckCommand
 
         Console.WriteLine("View Overrides:");
 
-        foreach (var (viewKey, viewOverride) in config.Views.Overrides)
+        foreach (var (viewKey, viewOverride) in overrides)
         {
             if (verbose)
             {
                 Console.WriteLine($"  {viewKey}:");
             }
 
-            foreach (var jsFile in viewOverride.Js)
+            var jsFiles = viewOverride?.Js ?? new List<string>();
+            var cssFiles = viewOverride?.Css ?? new List<string>();
+
+            foreach (var jsFile in jsFiles)
             {
                 if (!File.Exists(jsFile))
                 {
@@ -147,7 +155,7 @@ public class CheckCommand
                 }
             }
 
-            foreach (var cssFile in viewOverride.Css)
+            foreach (var cssFile in cssFiles)
             {
                 if (!File.Exists(cssFile))
                 {
@@ -163,7 +171,7 @@ public class CheckCommand
 
         if (errors == 0 && !verbose)
         {
-            Console.WriteLine($"  ✓ {config.Views.Overrides.Count} view override(s)");
+            Console.WriteLine($"  ✓ {overrides.Count} view override(s)");
         }
 
         Console.WriteLine();
@@ -174,7 +182,9 @@ public class CheckCommand
     {
         var errors = 0;
 
-        if (!config.Components.Any())
+        var components = config.Components ?? new Dictionary<string, ComponentConfig>();
+
+        if (!components.Any())
         {
             if (verbose)
             {
@@ -186,14 +196,18 @@ public class CheckCommand
 
         Console.WriteLine("Components:");
 
-        foreach (var (componentName, component) in config.Components)
+        foreach (var (componentName, component) in components)
         {
             if (verbose)
             {
                 Console.WriteLine($"  {componentName}:");
             }
 
-            foreach (var jsFile in component.Js)
+            var jsFiles = component?.Js ?? new List<string>();
+            var cssFiles = component?.Css ?? new List<string>();
+            var depends = component?.Depends ?? new List<string>();
+
+            foreach (var jsFile in jsFiles)
             {
                 if (!File.Exists(jsFile))
                 {
@@ -206,7 +220,7 @@ public class CheckCommand
                 }
             }
 
-            foreach (var cssFile in component.Css)
+            foreach (var cssFile in cssFiles)
             {
                 if (!File.Exists(cssFile))
                 {
@@ -219,15 +233,15 @@ public class CheckCommand
                 }
             }
 
-            if (component.Depends.Any() && verbose)
+            if (depends.Any() && verbose)
             {
-                Console.WriteLine($"    Dependencies: {string.Join(", ", component.Depends)}");
+                Console.WriteLine($"    Dependencies: {string.Join(", ", depends)}");
             }
         }
 
         if (errors == 0 && !verbose)
         {
-            Console.WriteLine($"  ✓ {config.Components.Count} component(s)");
+            Console.WriteLine($"  ✓ {components.Count} component(s)");
         }
 
         Console.WriteLine();
@@ -238,29 +252,31 @@ public class CheckCommand
     {
         Console.WriteLine("Configuration Details:");
         Console.WriteLine($"  Config Version: {config.ConfigVersion}");
-        Console.WriteLine($"  JS Auto-Link: {config.Views.JsAutoLinkByConvention}");
-        Console.WriteLine($"  CSS Auto-Link: {config.Views.CssAutoLinkByConvention}");
-        Console.WriteLine($"  Import Map Enabled: {config.ImportMap.Enabled}");
-        Console.WriteLine($"  CSS Allow Relative: {config.CssUrlPolicy.AllowRelative}");
-        Console.WriteLine($"  CSS Resolve Imports: {config.CssUrlPolicy.ResolveImports}");
-        Console.WriteLine($"  Clean Dist On Build: {config.Output.CleanDistOnBuild}");
+        Console.WriteLine($"  JS Auto-Link: {config.Views?.JsAutoLinkByConvention ?? true}");
+        Console.WriteLine($"  CSS Auto-Link: {config.Views?.CssAutoLinkByConvention ?? true}");
+        Console.WriteLine($"  Import Map Enabled: {config.ImportMap?.Enabled ?? true}");
+        Console.WriteLine($"  CSS Allow Relative: {config.CssUrlPolicy?.AllowRelative ?? false}");
+        Console.WriteLine($"  CSS Resolve Imports: {config.CssUrlPolicy?.ResolveImports ?? true}");
+        Console.WriteLine($"  Clean Dist On Build: {config.Output?.CleanDistOnBuild ?? true}");
 
-        if (config.Views.Conventions.Any())
+        var conventions = config.Views?.Conventions ?? new List<ViewConvention>();
+        if (conventions.Any())
         {
             Console.WriteLine();
             Console.WriteLine("JS Conventions:");
-            foreach (var convention in config.Views.Conventions)
+            foreach (var convention in conventions)
             {
                 Console.WriteLine($"  {convention.ViewPattern}");
                 Console.WriteLine($"    -> {convention.ScriptBasePattern}");
             }
         }
 
-        if (config.Views.CssConventions.Any())
+        var cssConventions = config.Views?.CssConventions ?? new List<CssConvention>();
+        if (cssConventions.Any())
         {
             Console.WriteLine();
             Console.WriteLine("CSS Conventions:");
-            foreach (var convention in config.Views.CssConventions)
+            foreach (var convention in cssConventions)
             {
                 Console.WriteLine($"  {convention.ViewPattern}");
                 Console.WriteLine($"    -> {convention.CssPattern}");

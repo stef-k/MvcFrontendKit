@@ -217,6 +217,9 @@ importMap:
     # "vue-router": "/lib/vue-router/vue-router.esm-browser.js"
 
 # Global site assets (always included on every page via FrontendGlobalScripts/Styles).
+# NOTE: In Dev mode, JS is loaded with type="module". To expose functions globally:
+#   window.myFunc = myFunc;  // Makes myFunc available everywhere
+# This is the recommended modern pattern and works in both Dev and Prod.
 global:
   # Global JS entry files (in order). Dev uses these as-is; Prod bundles them into one JS bundle.
   js:
@@ -237,26 +240,27 @@ views:
   # If true, CSS files can be discovered by naming conventions instead of requiring overrides.
   cssAutoLinkByConvention: true
 
-  # JS conventions: how to map a view path (Views/... or Areas/.../Views/...) to a JS "base path".
+  # JS conventions: how to map a view key to a JS "base path".
+  # View keys are generated as: "Views/{Controller}/{Action}" or "Areas/{Area}/{Controller}/{Action}"
   # Conventions are evaluated in order; first match wins.
   conventions:
-    # Example: Views/Home/Index.cshtml -> wwwroot/js/Home/Index*.js (various case attempts)
-    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+    # Example: Views/Home/Index -> wwwroot/js/Home/Index*.js (various case attempts)
+    - viewPattern: "Views/{Controller}/{Action}"
       scriptBasePattern: "wwwroot/js/{Controller}/{Action}"
 
-    # Example: Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/js/Areas/Admin/Settings/Index*.js
-    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+    # Example: Areas/Admin/Settings/Index -> wwwroot/js/Areas/Admin/Settings/Index*.js
+    - viewPattern: "Areas/{Area}/{Controller}/{Action}"
       scriptBasePattern: "wwwroot/js/Areas/{Area}/{Controller}/{Action}"
 
-  # CSS conventions: how to map a view path to a CSS file.
+  # CSS conventions: how to map a view key to a CSS file.
   # Conventions are evaluated in order; first match wins.
   cssConventions:
-    # Example: Views/Home/Index.cshtml -> wwwroot/css/Home/Index.css
-    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+    # Example: Views/Home/Index -> wwwroot/css/Home/Index.css
+    - viewPattern: "Views/{Controller}/{Action}"
       cssPattern: "wwwroot/css/{Controller}/{Action}.css"
 
-    # Example: Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/css/Areas/Admin/Settings/Index.css
-    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+    # Example: Areas/Admin/Settings/Index -> wwwroot/css/Areas/Admin/Settings/Index.css
+    - viewPattern: "Areas/{Area}/{Controller}/{Action}"
       cssPattern: "wwwroot/css/Areas/{Area}/{Controller}/{Action}.css"
 
   # Explicit per-view overrides (JS & CSS), keyed by logical view key.

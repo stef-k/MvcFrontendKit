@@ -92,7 +92,7 @@ Add helpers to your `_Layout.cshtml` or equivalent:
 - **Dev vs Prod flow**
   - Dev:
     - Raw JS/CSS from `wwwroot/js` and `wwwroot/css`
-    - `type="module"` for JS modules
+    - `type="module"` for JS (use `window.myFunc = myFunc` to expose globals)
     - `?v={File.GetLastWriteTimeUtc(path).Ticks` cache-busting
   - Prod:
     - Bundled + minified JS/CSS into `/dist/js` and `/dist/css`

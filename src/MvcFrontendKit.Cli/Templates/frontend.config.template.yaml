@@ -53,6 +53,9 @@ importMap:
     # vue: "/lib/vue/vue.esm-browser.js"
 
 # Global site assets (included on every page)
+# NOTE: In Dev mode, JS is loaded with type="module". To expose functions globally:
+#   window.myFunc = myFunc;  // Makes myFunc available everywhere
+# This is the recommended modern pattern and works in both Dev and Prod.
 global:
   js:
     - wwwroot/js/site.js
@@ -68,24 +71,25 @@ views:
   # Enable auto-discovery of CSS files by convention
   cssAutoLinkByConvention: true
 
-  # JS conventions: map view paths to JS base paths
+  # JS conventions: map view keys to JS base paths
+  # View keys are generated as: "Views/{Controller}/{Action}" or "Areas/{Area}/{Controller}/{Action}"
   conventions:
-    # Views/Home/Index.cshtml -> wwwroot/js/Home/Index*.js
-    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+    # Views/Home/Index -> wwwroot/js/Home/Index*.js
+    - viewPattern: "Views/{Controller}/{Action}"
       scriptBasePattern: "wwwroot/js/{Controller}/{Action}"
 
-    # Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/js/Areas/Admin/Settings/Index*.js
-    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+    # Areas/Admin/Settings/Index -> wwwroot/js/Areas/Admin/Settings/Index*.js
+    - viewPattern: "Areas/{Area}/{Controller}/{Action}"
       scriptBasePattern: "wwwroot/js/Areas/{Area}/{Controller}/{Action}"
 
-  # CSS conventions: map view paths to CSS files
+  # CSS conventions: map view keys to CSS files
   cssConventions:
-    # Views/Home/Index.cshtml -> wwwroot/css/Home/Index.css
-    - viewPattern: "Views/{Controller}/{Action}.cshtml"
+    # Views/Home/Index -> wwwroot/css/Home/Index.css
+    - viewPattern: "Views/{Controller}/{Action}"
       cssPattern: "wwwroot/css/{Controller}/{Action}.css"
 
-    # Areas/Admin/Views/Settings/Index.cshtml -> wwwroot/css/Areas/Admin/Settings/Index.css
-    - viewPattern: "Areas/{Area}/Views/{Controller}/{Action}.cshtml"
+    # Areas/Admin/Settings/Index -> wwwroot/css/Areas/Admin/Settings/Index.css
+    - viewPattern: "Areas/{Area}/{Controller}/{Action}"
       cssPattern: "wwwroot/css/Areas/{Area}/{Controller}/{Action}.css"
 
   # Explicit overrides (takes precedence over conventions)
