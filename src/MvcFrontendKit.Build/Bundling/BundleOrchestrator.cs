@@ -454,8 +454,13 @@ public class BundleOrchestrator
 
     private string ConvertToUrl(string filePath)
     {
-        var webRoot = Path.Combine(_projectRoot, _config.WebRoot);
-        var relativePath = GetRelativePath(webRoot, filePath);
+        // Get relative path from dist directory (not webRoot) to avoid double distUrlRoot
+        // e.g., filePath = wwwroot/dist/js/global.xxx.js
+        //       distDir  = wwwroot/dist
+        //       relative = js/global.xxx.js
+        //       result   = /dist/js/global.xxx.js
+        var distDir = Path.Combine(_projectRoot, _config.WebRoot, "dist");
+        var relativePath = GetRelativePath(distDir, filePath);
         return _config.DistUrlRoot.TrimEnd('/') + "/" + relativePath.Replace("\\", "/");
     }
 
