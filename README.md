@@ -24,24 +24,42 @@ This is for ASP.NET devs who want modern bundling without committing to the full
 
 ## Installation
 
-### 1. Install the NuGet packages
+### 1. Install the NuGet package
 
 ```bash
-# Install the main library
 dotnet add package MvcFrontendKit
-
-# Install the CLI tool (optional but recommended)
-dotnet tool install --global MvcFrontendKit.Cli
 ```
 
-### 2. Generate configuration
+This is the only package required for both **runtime** and **production builds**. It includes:
+- Razor HTML helpers for your views
+- MSBuild targets that automatically run esbuild during `dotnet publish -c Release`
+- Platform-specific esbuild binaries (no Node.js required)
+
+### 2. Install the CLI tool (optional)
+
+The CLI provides diagnostic commands (`init`, `check`, `build --dry-run`) for development and CI workflows:
+
+```bash
+# Global install (available everywhere)
+dotnet tool install --global MvcFrontendKit.Cli
+
+# Or local install (per-project, tracked in .config/dotnet-tools.json)
+dotnet new tool-manifest   # if you don't have one yet
+dotnet tool install MvcFrontendKit.Cli
+```
+
+> **Note:** The CLI is **not required** for builds to work. Production bundling is handled by MSBuild targets in the main package. Install the CLI only if you want commands like `dotnet frontend check` or `dotnet frontend init`.
+
+### 3. Generate configuration
 
 ```bash
 # Creates frontend.config.yaml with sensible defaults
 dotnet frontend init
 ```
 
-### 3. Register services in Program.cs
+If you don't have the CLI installed, you can copy the template from the [SPEC.md](SPEC.md#32-core-schema-overview) or let the MSBuild target auto-generate a default config on first build.
+
+### 4. Register services in Program.cs
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -55,7 +73,7 @@ var app = builder.Build();
 // ... rest of your app configuration
 ```
 
-### 4. Update your layout
+### 5. Update your layout
 
 Add helpers to your `_Layout.cshtml` or equivalent:
 
@@ -82,7 +100,7 @@ Add helpers to your `_Layout.cshtml` or equivalent:
 </body>
 ```
 
-### 5. Develop and build
+### 6. Develop and build
 
 - **Development:** Run `dotnet run` or `dotnet watch`. Raw files served from `wwwroot` with cache-busting.
 - **Production:** Run `dotnet publish -c Release`. Bundles built automatically to `wwwroot/dist` with `frontend.manifest.json`.
