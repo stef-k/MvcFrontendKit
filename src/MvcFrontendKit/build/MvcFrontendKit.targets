@@ -12,9 +12,23 @@
   <UsingTask TaskName="MvcFrontendKit.Build.FrontendBundleTask"
              AssemblyFile="$(MSBuildThisFileDirectory)..\tasks\$(_MvcFrontendKitTaskFolder)\MvcFrontendKit.Build.dll" />
 
-  <!-- Hook into the Build process for Release configuration -->
+  <!--
+    Hook into the Build process BEFORE StaticWebAssets discovery.
+
+    Target ordering for ASP.NET Core web apps:
+    1. PrepareForBuild
+    2. ResolveProjectReferences
+    3. MvcFrontendKitBuild (our target) - creates wwwroot/dist files
+    4. ResolveStaticWebAssetsInputs - discovers wwwroot files including our bundles
+    5. GenerateStaticWebAssetsManifest - creates staticwebassets.build.json
+    6. Build completion
+
+    CRITICAL: We must run BEFORE ResolveStaticWebAssetsInputs so that our
+    generated bundles in wwwroot/dist are included in the static web assets manifest.
+  -->
   <Target Name="MvcFrontendKitBuild"
-          BeforeTargets="Build"
+          AfterTargets="ResolveProjectReferences"
+          BeforeTargets="ResolveStaticWebAssetsInputs;AssignTargetPaths"
           Condition="'$(MvcFrontendKitEnabled)' == 'true' AND ('$(Configuration)' == 'Release' OR '$(MvcFrontendKitSkipOnDebug)' != 'true')">
 
     <Message Text="MvcFrontendKit: Bundling frontend assets..." Importance="high" />
@@ -30,17 +44,30 @@
     <FrontendBundleTask ProjectDirectory="$(MSBuildProjectDirectory)"
                         ConfigPath="$(MvcFrontendKitConfigPath)" />
 
+    <!--
+      After bundling, we need to ensure the new files in wwwroot/dist are
+      picked up by StaticWebAssets. Include them as Content items.
+    -->
+    <ItemGroup>
+      <Content Include="$(MSBuildProjectDirectory)\wwwroot\dist\**\*"
+               Condition="Exists('$(MSBuildProjectDirectory)\wwwroot\dist')"
+               CopyToOutputDirectory="PreserveNewest"
+               CopyToPublishDirectory="PreserveNewest" />
+      <Content Include="$(MvcFrontendKitManifestPath)"
+               Condition="Exists('$(MvcFrontendKitManifestPath)')"
+               CopyToOutputDirectory="PreserveNewest"
+               CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
   </Target>
 
   <!-- Hook into Publish to ensure bundles are included -->
   <Target Name="MvcFrontendKitPublish"
-          BeforeTargets="Publish"
+          BeforeTargets="PrepareForPublish"
+          DependsOnTargets="MvcFrontendKitBuild"
           Condition="'$(MvcFrontendKitEnabled)' == 'true'">
 
     <Message Text="MvcFrontendKit: Preparing frontend assets for publish..." Importance="high" />
-
-    <!-- Ensure the bundling has run -->
-    <CallTarget Targets="MvcFrontendKitBuild" />
 
   </Target>
 
