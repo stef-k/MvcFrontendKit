@@ -27,7 +27,16 @@
       "WebSearch",
       "Bash(del \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\tests\\MvcFrontendKit.Tests\\UnitTest1.cs\")",
       "Bash(Remove-Item \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\tests\\MvcFrontendKit.Tests\\UnitTest1.cs\" -Force)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(if exist build-output rmdir /s /q build-output)",
+      "Bash(Remove-Item -Recurse -Force \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\build-output\" -ErrorAction SilentlyContinue)",
+      "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\build-output\")",
+      "Bash(tar:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell:*)",
+      "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\")",
+      "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\build-output\\tasks\\net472\")",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
