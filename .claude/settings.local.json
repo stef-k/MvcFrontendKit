@@ -23,7 +23,11 @@
       "Bash(dotnet tool install:*)",
       "Bash(dotnet tool update:*)",
       "Bash(dotnet tool list:*)",
-      "Bash(frontend --help:*)"
+      "Bash(frontend --help:*)",
+      "WebSearch",
+      "Bash(del \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\tests\\MvcFrontendKit.Tests\\UnitTest1.cs\")",
+      "Bash(Remove-Item \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\tests\\MvcFrontendKit.Tests\\UnitTest1.cs\" -Force)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []
