@@ -13,9 +13,13 @@ namespace MvcFrontendKit.Build.Bundling;
 
 public class BundleOrchestrator
 {
+    private const string VersionMarkerFileName = ".mvcfrontendkit-version";
     private readonly FrontendConfig _config;
     private readonly string _projectRoot;
     private readonly ILogger _logger;
+
+    // Tool version - update this when releasing new versions
+    private static string ToolVersion => typeof(BundleOrchestrator).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 
     public BundleOrchestrator(FrontendConfig config, string projectRoot, ILogger logger)
     {
@@ -27,6 +31,7 @@ public class BundleOrchestrator
     public async Task<bool> BuildBundlesAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting frontend bundle process...");
+        _logger.LogInformation("MvcFrontendKit version: {Version}", ToolVersion);
 
         try
         {
@@ -34,10 +39,16 @@ public class BundleOrchestrator
             var distJsDir = Path.Combine(distDir, _config.DistJsSubPath);
             var distCssDir = Path.Combine(distDir, _config.DistCssSubPath);
 
-            if (_config.Output.CleanDistOnBuild)
+            // Check version marker and clean if version changed
+            var versionChanged = CheckAndHandleVersionChange(distDir);
+
+            if (_config.Output.CleanDistOnBuild || versionChanged)
             {
                 CleanDistDirectories(distJsDir, distCssDir);
             }
+
+            // Clean SDK compressed cache to prevent stale reference errors
+            CleanSdkCompressedCache();
 
             Directory.CreateDirectory(distJsDir);
             Directory.CreateDirectory(distCssDir);
@@ -68,6 +79,9 @@ public class BundleOrchestrator
 
             await WriteManifestAsync(manifest);
 
+            // Write version marker after successful build
+            WriteVersionMarker(distDir);
+
             _logger.LogInformation("Frontend bundle process completed successfully");
             return true;
         }
@@ -81,6 +95,124 @@ public class BundleOrchestrator
             }
             _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if the tool version has changed since last build.
+    /// If changed, performs a full clean to prevent stale cache issues.
+    /// </summary>
+    private bool CheckAndHandleVersionChange(string distDir)
+    {
+        var markerPath = Path.Combine(distDir, VersionMarkerFileName);
+
+        if (!File.Exists(markerPath))
+        {
+            _logger.LogInformation("No version marker found - will perform clean build");
+            return true;
+        }
+
+        try
+        {
+            var previousVersion = File.ReadAllText(markerPath).Trim();
+            if (previousVersion != ToolVersion)
+            {
+                _logger.LogInformation("Version changed from {Previous} to {Current} - performing clean build",
+                    previousVersion, ToolVersion);
+                return true;
+            }
+
+            _logger.LogDebug("Version unchanged ({Version})", ToolVersion);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Failed to read version marker: {Message} - performing clean build", ex.Message);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Writes the current tool version to a marker file in the dist directory.
+    /// </summary>
+    private void WriteVersionMarker(string distDir)
+    {
+        try
+        {
+            Directory.CreateDirectory(distDir);
+            var markerPath = Path.Combine(distDir, VersionMarkerFileName);
+            File.WriteAllText(markerPath, ToolVersion);
+            _logger.LogDebug("Wrote version marker: {Version}", ToolVersion);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Failed to write version marker: {Message}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Cleans the ASP.NET SDK's compressed static assets cache in obj/ folder.
+    /// This prevents stale reference errors when fingerprinted filenames change.
+    /// </summary>
+    private void CleanSdkCompressedCache()
+    {
+        try
+        {
+            var objDir = Path.Combine(_projectRoot, "obj");
+            if (!Directory.Exists(objDir))
+            {
+                return;
+            }
+
+            // Find and clean compressed cache directories
+            // Pattern: obj/{Configuration}/{TargetFramework}/compressed/
+            var compressedDirs = Directory.GetDirectories(objDir, "compressed", SearchOption.AllDirectories);
+
+            foreach (var compressedDir in compressedDirs)
+            {
+                try
+                {
+                    _logger.LogInformation("Cleaning SDK compressed cache: {Dir}", compressedDir);
+                    Directory.Delete(compressedDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Failed to clean compressed cache {Dir}: {Message}", compressedDir, ex.Message);
+                }
+            }
+
+            // Also clean staticwebassets intermediate files that reference fingerprinted assets
+            var staticAssetFiles = new[]
+            {
+                "staticwebassets.build.json",
+                "staticwebassets.publish.json",
+                "staticwebassets/*.json"
+            };
+
+            foreach (var pattern in staticAssetFiles)
+            {
+                var files = Directory.GetFiles(objDir, Path.GetFileName(pattern), SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    // Only delete files that might contain stale frontend asset references
+                    if (file.Contains("staticwebassets"))
+                    {
+                        try
+                        {
+                            _logger.LogDebug("Cleaning static assets cache file: {File}", file);
+                            File.Delete(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning("Failed to clean cache file {File}: {Message}", file, ex.Message);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Failed to clean SDK compressed cache: {Message}", ex.Message);
         }
     }
 
@@ -198,6 +330,10 @@ public class BundleOrchestrator
             }
         }
 
+        // Track which view keys have been processed (to avoid duplicate bundling)
+        var processedViewKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Process explicit overrides first
         foreach (var kvp in _config.Views.Overrides)
         {
             var viewKey = kvp.Key;
@@ -237,8 +373,350 @@ public class BundleOrchestrator
             if (viewData.Any())
             {
                 manifest[$"view:{viewKey}"] = viewData;
+                processedViewKeys.Add(viewKey);
             }
         }
+
+        // Discover and bundle convention-based view JS files
+        if (_config.Views.JsAutoLinkByConvention)
+        {
+            var discoveredJs = DiscoverViewJsByConvention();
+            _logger.LogInformation("Discovered {Count} view JS files by convention", discoveredJs.Count);
+
+            foreach (var kvp in discoveredJs)
+            {
+                var viewKey = kvp.Key;
+                var jsFilePath = kvp.Value;
+
+                if (processedViewKeys.Contains(viewKey))
+                {
+                    _logger.LogInformation("  Skipping {ViewKey} (already has override)", viewKey);
+                    continue;
+                }
+
+                _logger.LogInformation("  Bundling {ViewKey} <- {JsFile}", viewKey, jsFilePath);
+
+                var safeName = MakeSafeName(viewKey);
+                var jsResult = await BuildJsBundle(
+                    runner,
+                    new List<string> { jsFilePath },
+                    Path.Combine(distJsDir, $"{safeName}.[hash].js"),
+                    cancellationToken);
+
+                if (jsResult != null)
+                {
+                    if (manifest.ContainsKey($"view:{viewKey}"))
+                    {
+                        var viewData = (Dictionary<string, object>)manifest[$"view:{viewKey}"];
+                        viewData["js"] = new List<string> { jsResult };
+                    }
+                    else
+                    {
+                        manifest[$"view:{viewKey}"] = new Dictionary<string, object>
+                        {
+                            ["js"] = new List<string> { jsResult }
+                        };
+                    }
+                    processedViewKeys.Add(viewKey);
+                }
+            }
+        }
+
+        // Discover and bundle convention-based view CSS files
+        if (_config.Views.CssAutoLinkByConvention)
+        {
+            var discoveredCss = DiscoverViewCssByConvention();
+            _logger.LogInformation("Discovered {Count} view CSS files by convention", discoveredCss.Count);
+
+            foreach (var kvp in discoveredCss)
+            {
+                var viewKey = kvp.Key;
+                var cssFilePath = kvp.Value;
+
+                // Check if this view key already has CSS from override
+                if (_config.Views.Overrides.TryGetValue(viewKey, out var existingOverride) && existingOverride.Css.Any())
+                {
+                    _logger.LogInformation("  Skipping CSS for {ViewKey} (already has override)", viewKey);
+                    continue;
+                }
+
+                _logger.LogInformation("  Bundling CSS {ViewKey} <- {CssFile}", viewKey, cssFilePath);
+
+                var safeName = MakeSafeName(viewKey);
+                var cssResult = await BuildCssBundle(
+                    runner,
+                    new List<string> { cssFilePath },
+                    Path.Combine(distCssDir, $"{safeName}.[hash].css"),
+                    cancellationToken);
+
+                if (cssResult != null)
+                {
+                    if (manifest.ContainsKey($"view:{viewKey}"))
+                    {
+                        var viewData = (Dictionary<string, object>)manifest[$"view:{viewKey}"];
+                        viewData["css"] = new List<string> { cssResult };
+                    }
+                    else
+                    {
+                        manifest[$"view:{viewKey}"] = new Dictionary<string, object>
+                        {
+                            ["css"] = new List<string> { cssResult }
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Discovers view JS files by scanning jsRoot and matching against conventions.
+    /// Returns a dictionary of view key -> relative JS file path.
+    /// </summary>
+    private Dictionary<string, string> DiscoverViewJsByConvention()
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var jsRootPath = Path.Combine(_projectRoot, _config.JsRoot);
+
+        if (!Directory.Exists(jsRootPath))
+        {
+            _logger.LogWarning("JS root directory does not exist: {JsRoot}", jsRootPath);
+            return result;
+        }
+
+        // Scan for all JS files
+        var jsFiles = Directory.GetFiles(jsRootPath, "*.js", SearchOption.AllDirectories);
+        _logger.LogInformation("Found {Count} JS files in {JsRoot}", jsFiles.Length, _config.JsRoot);
+
+        foreach (var jsFile in jsFiles)
+        {
+            // Skip files in dist folder
+            if (jsFile.Contains(Path.DirectorySeparatorChar + "dist" + Path.DirectorySeparatorChar) ||
+                jsFile.Contains("/dist/"))
+            {
+                continue;
+            }
+
+            // Get relative path from project root
+            var relativePath = GetRelativePath(_projectRoot, jsFile).Replace("\\", "/");
+
+            // Try to match against each convention
+            foreach (var convention in _config.Views.Conventions)
+            {
+                if (TryMatchScriptPath(relativePath, convention.ScriptBasePattern, out var tokens))
+                {
+                    var viewKey = ApplyTokens(convention.ViewPattern, tokens);
+
+                    // Only add if not already found (first match wins)
+                    if (!result.ContainsKey(viewKey))
+                    {
+                        result[viewKey] = relativePath;
+                        _logger.LogDebug("  Matched: {JsFile} -> {ViewKey}", relativePath, viewKey);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Discovers view CSS files by scanning cssRoot and matching against conventions.
+    /// Returns a dictionary of view key -> relative CSS file path.
+    /// </summary>
+    private Dictionary<string, string> DiscoverViewCssByConvention()
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var cssRootPath = Path.Combine(_projectRoot, _config.CssRoot);
+
+        if (!Directory.Exists(cssRootPath))
+        {
+            _logger.LogWarning("CSS root directory does not exist: {CssRoot}", cssRootPath);
+            return result;
+        }
+
+        // Scan for all CSS files
+        var cssFiles = Directory.GetFiles(cssRootPath, "*.css", SearchOption.AllDirectories);
+        _logger.LogInformation("Found {Count} CSS files in {CssRoot}", cssFiles.Length, _config.CssRoot);
+
+        foreach (var cssFile in cssFiles)
+        {
+            // Skip files in dist folder
+            if (cssFile.Contains(Path.DirectorySeparatorChar + "dist" + Path.DirectorySeparatorChar) ||
+                cssFile.Contains("/dist/"))
+            {
+                continue;
+            }
+
+            // Get relative path from project root
+            var relativePath = GetRelativePath(_projectRoot, cssFile).Replace("\\", "/");
+
+            // Try to match against each CSS convention
+            foreach (var convention in _config.Views.CssConventions)
+            {
+                if (TryMatchCssPath(relativePath, convention.CssPattern, out var tokens))
+                {
+                    var viewKey = ApplyTokens(convention.ViewPattern, tokens);
+
+                    // Only add if not already found (first match wins)
+                    if (!result.ContainsKey(viewKey))
+                    {
+                        result[viewKey] = relativePath;
+                        _logger.LogDebug("  Matched: {CssFile} -> {ViewKey}", relativePath, viewKey);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Tries to match a JS file path against a script base pattern.
+    /// Extracts tokens (Controller, Action, Area) from the path.
+    /// Handles various JS file naming conventions (camelCase, lowercase, PascalCase, *Page.js).
+    /// </summary>
+    private bool TryMatchScriptPath(string jsPath, string scriptBasePattern, out Dictionary<string, string> tokens)
+    {
+        tokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Normalize paths
+        var normalizedJsPath = jsPath.Replace("\\", "/");
+        var normalizedPattern = scriptBasePattern.Replace("\\", "/");
+
+        // Remove .js extension from the file path
+        if (!normalizedJsPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        var jsPathWithoutExt = normalizedJsPath.Substring(0, normalizedJsPath.Length - 3);
+
+        // Remove "Page" suffix if present (e.g., indexPage.js -> index)
+        var jsPathBase = jsPathWithoutExt;
+        if (jsPathBase.EndsWith("Page", StringComparison.OrdinalIgnoreCase))
+        {
+            jsPathBase = jsPathBase.Substring(0, jsPathBase.Length - 4);
+        }
+
+        // Split into parts
+        var patternParts = normalizedPattern.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        var pathParts = jsPathBase.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (patternParts.Length != pathParts.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < patternParts.Length; i++)
+        {
+            var patternPart = patternParts[i];
+            var pathPart = pathParts[i];
+
+            if (patternPart.StartsWith("{") && patternPart.EndsWith("}"))
+            {
+                // Extract token name
+                var tokenName = patternPart.Trim('{', '}');
+                tokens[tokenName] = pathPart;
+            }
+            else if (!patternPart.Equals(pathPart, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to match a CSS file path against a CSS pattern.
+    /// Extracts tokens (Controller, Action, Area) from the path.
+    /// </summary>
+    private bool TryMatchCssPath(string cssPath, string cssPattern, out Dictionary<string, string> tokens)
+    {
+        tokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Normalize paths
+        var normalizedCssPath = cssPath.Replace("\\", "/");
+        var normalizedPattern = cssPattern.Replace("\\", "/");
+
+        // Remove .css extension from both
+        if (!normalizedCssPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        var cssPathWithoutExt = normalizedCssPath.Substring(0, normalizedCssPath.Length - 4);
+
+        var patternWithoutExt = normalizedPattern;
+        if (patternWithoutExt.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            patternWithoutExt = patternWithoutExt.Substring(0, patternWithoutExt.Length - 4);
+        }
+
+        // Split into parts
+        var patternParts = patternWithoutExt.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        var pathParts = cssPathWithoutExt.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (patternParts.Length != pathParts.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < patternParts.Length; i++)
+        {
+            var patternPart = patternParts[i];
+            var pathPart = pathParts[i];
+
+            if (patternPart.StartsWith("{") && patternPart.EndsWith("}"))
+            {
+                // Extract token name
+                var tokenName = patternPart.Trim('{', '}');
+                tokens[tokenName] = pathPart;
+            }
+            else if (!patternPart.Equals(pathPart, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Applies token values to a pattern string.
+    /// </summary>
+    private string ApplyTokens(string pattern, Dictionary<string, string> tokens)
+    {
+        var result = pattern;
+
+        foreach (var kvp in tokens)
+        {
+            // Case-insensitive replace for .NET Framework compatibility
+            result = ReplaceIgnoreCase(result, $"{{{kvp.Key}}}", kvp.Value);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Case-insensitive string replace for .NET Framework compatibility.
+    /// </summary>
+    private static string ReplaceIgnoreCase(string source, string oldValue, string newValue)
+    {
+        var sb = new StringBuilder();
+        var previousIndex = 0;
+        var index = source.IndexOf(oldValue, StringComparison.OrdinalIgnoreCase);
+
+        while (index != -1)
+        {
+            sb.Append(source.Substring(previousIndex, index - previousIndex));
+            sb.Append(newValue);
+            previousIndex = index + oldValue.Length;
+            index = source.IndexOf(oldValue, previousIndex, StringComparison.OrdinalIgnoreCase);
+        }
+
+        sb.Append(source.Substring(previousIndex));
+        return sb.ToString();
     }
 
     private async Task BuildComponentsAsync(

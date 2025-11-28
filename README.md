@@ -206,6 +206,39 @@ See **`SPEC.md`** for the full formal specification.
 
 ---
 
+## Upgrading
+
+MvcFrontendKit automatically handles most upgrade scenarios. When you update to a new version:
+
+1. **Version marker detection**: The tool writes a `.mvcfrontendkit-version` file to `wwwroot/dist/`. On each build, it checks if the version has changed and automatically performs a clean build if needed.
+
+2. **SDK cache cleanup**: The build process automatically cleans the ASP.NET SDK's static web assets compression cache (`obj/**/compressed/`) to prevent stale reference errors.
+
+### Manual clean (if needed)
+
+In rare cases where you encounter build errors about missing fingerprinted files, run:
+
+```bash
+# Full clean
+dotnet clean -c Release
+rm -rf wwwroot/dist
+rm -rf obj/*/compressed
+
+# Then rebuild
+dotnet publish -c Release
+```
+
+### gitignore recommendations
+
+Add the version marker to your `.gitignore`:
+
+```
+wwwroot/dist/
+wwwroot/frontend.manifest.json
+```
+
+---
+
 ## Repository layout
 
 ```text
