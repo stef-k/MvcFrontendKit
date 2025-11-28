@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MvcFrontendKit\MvcFrontendKit.csproj" />
     <ProjectReference Include="..\..\src\MvcFrontendKit.Cli\MvcFrontendKit.Cli.csproj" />
+    <ProjectReference Include="..\..\src\MvcFrontendKit.Build\MvcFrontendKit.Build.csproj" />
   </ItemGroup>
 
 </Project>
