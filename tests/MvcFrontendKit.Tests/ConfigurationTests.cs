@@ -198,6 +198,33 @@ esbuild:
     }
 
     [Fact]
+    public void EsbuildJsFormatDefaultsToIife()
+    {
+        var config = new FrontendConfig();
+
+        Assert.Equal("iife", config.Esbuild.JsFormat);
+    }
+
+    [Theory]
+    [InlineData("iife")]
+    [InlineData("esm")]
+    public void CanDeserializeEsbuildJsFormat(string format)
+    {
+        var yaml = $@"
+configVersion: 1
+esbuild:
+  jsFormat: {format}
+";
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+        var config = deserializer.Deserialize<FrontendConfig>(yaml);
+
+        Assert.Equal(format, config.Esbuild.JsFormat);
+    }
+
+    [Fact]
     public void CanDeserializeCssUrlPolicy()
     {
         var yaml = @"

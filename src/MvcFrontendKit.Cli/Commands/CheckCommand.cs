@@ -47,6 +47,14 @@ public class CheckCommand
             var errors = 0;
             var warnings = 0;
 
+            // Validate jsFormat
+            var jsFormat = config.Esbuild?.JsFormat ?? "iife";
+            if (jsFormat != "iife" && jsFormat != "esm")
+            {
+                Console.WriteLine($"✗ Invalid esbuild.jsFormat: \"{jsFormat}\" (must be \"iife\" or \"esm\")");
+                errors++;
+            }
+
             // If checking a specific view
             if (!string.IsNullOrEmpty(viewKey))
             {
@@ -693,6 +701,13 @@ public class CheckCommand
         Console.WriteLine($"  CSS Allow Relative: {config.CssUrlPolicy?.AllowRelative ?? false}");
         Console.WriteLine($"  CSS Resolve Imports: {config.CssUrlPolicy?.ResolveImports ?? true}");
         Console.WriteLine($"  Clean Dist On Build: {config.Output?.CleanDistOnBuild ?? true}");
+
+        Console.WriteLine();
+        Console.WriteLine("Esbuild Settings:");
+        Console.WriteLine($"  JS Target: {config.Esbuild?.JsTarget ?? "es2020"}");
+        Console.WriteLine($"  JS Format: {config.Esbuild?.JsFormat ?? "iife"}");
+        Console.WriteLine($"  JS Sourcemap: {config.Esbuild?.JsSourcemap ?? true}");
+        Console.WriteLine($"  CSS Sourcemap: {config.Esbuild?.CssSourcemap ?? true}");
 
         var conventions = config.Views?.Conventions ?? new List<ViewConvention>();
         if (conventions.Any())

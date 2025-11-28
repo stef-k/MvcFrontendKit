@@ -121,5 +121,11 @@ components:
 # Esbuild tuning (optional, most projects use defaults)
 esbuild:
   jsTarget: "es2020"
+
+  # JS output format:
+  # - "iife"  : Immediately Invoked Function Expression (default, works with regular <script> tags)
+  # - "esm"   : ES Modules (requires <script type="module">, preserves exports)
+  jsFormat: "iife"
+
   jsSourcemap: true
   cssSourcemap: true

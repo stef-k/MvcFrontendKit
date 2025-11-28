@@ -308,6 +308,14 @@ esbuild:
   # JS target passed to esbuild (e.g., es2017, es2020, esnext).
   jsTarget: "es2020"
 
+  # JS output format:
+  # - "iife"  : Immediately Invoked Function Expression (default)
+  #             Wraps bundle in (function(){...})();
+  #             Works with regular <script> tags, strips export statements.
+  # - "esm"   : ES Modules
+  #             Preserves export statements, requires <script type="module">.
+  jsFormat: "iife"
+
   # Whether to generate JS sourcemaps in Prod (external .map files).
   jsSourcemap: true
 

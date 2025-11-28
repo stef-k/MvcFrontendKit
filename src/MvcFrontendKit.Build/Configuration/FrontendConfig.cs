@@ -155,6 +155,14 @@ public class EsbuildConfig
     [YamlMember(Alias = "jsTarget")]
     public string JsTarget { get; set; } = "es2020";
 
+    /// <summary>
+    /// JS output format: "iife" (default) or "esm".
+    /// IIFE wraps bundle in (function(){...})(); - works with regular script tags.
+    /// ESM preserves ES module syntax - requires type="module" on script tags.
+    /// </summary>
+    [YamlMember(Alias = "jsFormat")]
+    public string JsFormat { get; set; } = "iife";
+
     [YamlMember(Alias = "jsSourcemap")]
     public bool JsSourcemap { get; set; } = true;
 

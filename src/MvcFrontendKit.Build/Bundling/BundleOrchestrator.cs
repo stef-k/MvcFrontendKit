@@ -798,7 +798,7 @@ public class BundleOrchestrator
             Minify = true,
             Sourcemap = _config.Esbuild.JsSourcemap,
             Target = _config.Esbuild.JsTarget,
-            Format = "esm",
+            Format = _config.Esbuild.JsFormat,
             WorkingDirectory = _projectRoot
         };
 

@@ -198,4 +198,31 @@ views:
         Assert.Single(homeIndex.Js);
         Assert.Single(homeIndex.Css);
     }
+
+    [Fact]
+    public void BuildConfig_EsbuildJsFormatDefaultsToIife()
+    {
+        var config = new BuildConfig.FrontendConfig();
+
+        Assert.Equal("iife", config.Esbuild.JsFormat);
+    }
+
+    [Theory]
+    [InlineData("iife")]
+    [InlineData("esm")]
+    public void BuildConfig_CanDeserializeJsFormat(string format)
+    {
+        var yaml = $@"
+configVersion: 1
+esbuild:
+  jsFormat: {format}
+";
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+        var config = deserializer.Deserialize<BuildConfig.FrontendConfig>(yaml);
+
+        Assert.Equal(format, config.Esbuild.JsFormat);
+    }
 }
