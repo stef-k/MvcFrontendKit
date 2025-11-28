@@ -1,0 +1,9 @@
+<Project>
+
+  <!--
+    This file is imported for multi-targeting projects (using TargetFrameworks plural).
+    It imports the standard props file to ensure consistent behavior.
+  -->
+  <Import Project="..\build\MvcFrontendKit.props" />
+
+</Project>

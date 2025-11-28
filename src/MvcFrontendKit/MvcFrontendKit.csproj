@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.9</Version>
+    <Version>1.0.0-preview.10</Version>
     <Authors>stef-k</Authors>
     <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications using esbuild</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend</PackageTags>
@@ -30,13 +30,13 @@
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="build\**\*" Pack="true" PackagePath="build\" />
+    <None Include="buildMultiTargeting\**\*" Pack="true" PackagePath="buildMultiTargeting\" />
     <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />
-    <!-- Include the separate build task assembly and its dependencies -->
-    <None Include="..\..\build-output\MvcFrontendKit.Build.dll" Pack="true" PackagePath="tasks\netstandard2.0\" />
-    <None Include="..\..\build-output\MvcFrontendKit.Build.pdb" Pack="true" PackagePath="tasks\netstandard2.0\" Condition="Exists('..\..\build-output\MvcFrontendKit.Build.pdb')" />
-    <None Include="..\..\build-output\YamlDotNet.dll" Pack="true" PackagePath="tasks\netstandard2.0\" />
-    <None Include="..\..\build-output\Microsoft.Extensions.Logging.Abstractions.dll" Pack="true" PackagePath="tasks\netstandard2.0\" />
-    <None Include="..\..\build-output\System.Text.Json.dll" Pack="true" PackagePath="tasks\netstandard2.0\" />
+    <!-- Include the multi-targeted build task assemblies and dependencies -->
+    <!-- net472 for MSBuild.exe (.NET Framework) -->
+    <None Include="..\..\build-output\tasks\net472\**\*" Pack="true" PackagePath="tasks\net472\" />
+    <!-- net9.0 for dotnet build (.NET Core) -->
+    <None Include="..\..\build-output\tasks\net9.0\**\*" Pack="true" PackagePath="tasks\net9.0\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,13 @@
+<Project>
+
+  <!--
+    This file is imported for multi-targeting projects (using TargetFrameworks plural).
+    It imports the standard targets file to ensure consistent behavior.
+
+    For multi-targeting projects, MSBuild creates an outer build that dispatches to
+    inner builds for each target framework. We want the bundling to run once in the
+    outer build, not multiple times in each inner build.
+  -->
+  <Import Project="..\build\MvcFrontendKit.targets" />
+
+</Project>

@@ -1,8 +1,16 @@
-<Project>
+<Project TreatAsLocalProperty="_MvcFrontendKitTaskFolder">
 
-  <!-- Load the MSBuild task assembly from the separate netstandard2.0 build task -->
+  <!-- Detect MSBuild runtime and select appropriate task assembly -->
+  <PropertyGroup>
+    <!-- dotnet build (.NET Core) uses net9.0 -->
+    <_MvcFrontendKitTaskFolder Condition="'$(MSBuildRuntimeType)' == 'Core'">net9.0</_MvcFrontendKitTaskFolder>
+    <!-- MSBuild.exe (.NET Framework) uses net472 -->
+    <_MvcFrontendKitTaskFolder Condition="'$(MSBuildRuntimeType)' != 'Core'">net472</_MvcFrontendKitTaskFolder>
+  </PropertyGroup>
+
+  <!-- Load the MSBuild task assembly based on runtime -->
   <UsingTask TaskName="MvcFrontendKit.Build.FrontendBundleTask"
-             AssemblyFile="$(MSBuildThisFileDirectory)..\tasks\netstandard2.0\MvcFrontendKit.Build.dll" />
+             AssemblyFile="$(MSBuildThisFileDirectory)..\tasks\$(_MvcFrontendKitTaskFolder)\MvcFrontendKit.Build.dll" />
 
   <!-- Hook into the Build process for Release configuration -->
   <Target Name="MvcFrontendKitBuild"
@@ -12,6 +20,7 @@
     <Message Text="MvcFrontendKit: Bundling frontend assets..." Importance="high" />
     <Message Text="  Config: $(MvcFrontendKitConfigPath)" Importance="normal" />
     <Message Text="  Manifest: $(MvcFrontendKitManifestPath)" Importance="normal" />
+    <Message Text="  Task Assembly: $(_MvcFrontendKitTaskFolder)" Importance="low" />
 
     <!-- Check if config file exists -->
     <Error Condition="!Exists('$(MvcFrontendKitConfigPath)')"
