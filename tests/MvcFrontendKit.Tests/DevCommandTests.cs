@@ -228,11 +228,18 @@ public class DevCommandTests : IDisposable
     [Fact]
     public void PathDeduplication_RemovesDuplicatesWithMixedSeparators()
     {
+        // On Linux/macOS, backslash is a valid filename character, not a path separator
+        // This test only makes sense on Windows where both / and \ are path separators
+        if (!OperatingSystem.IsWindows())
+        {
+            return; // Skip on non-Windows platforms
+        }
+
         var projectRoot = _tempDir;
         var files = new List<string>
         {
             "wwwroot/js/site.ts",
-            @"wwwroot\js\site.ts",  // Same file, different separator
+            @"wwwroot\js\site.ts",  // Same file, different separator (Windows only)
             "wwwroot/js/Home/Index.ts"
         };
 
