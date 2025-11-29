@@ -37,7 +37,9 @@
       "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\")",
       "Bash(dir \"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\build-output\\tasks\\net472\")",
       "Bash(git push)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git -C:*)",
+      "Bash(git -C \"C:/Users/stef/source/repos/MvcFrontendKit\" commit -m \"$(cat <<''EOF''\nFix stale dist files causing StaticWebAssets build failures\n\nAdd early cleanup target (MvcFrontendKitCleanDist) that runs before\nPrepareForBuild and ResolveAssemblyReferences to remove wwwroot/dist\nbefore any StaticWebAssets discovery can register stale hashed files.\n\nWithout this fix:\n1. Previous build created global.OLDHASH.css\n2. New build starts, SDK discovers and registers global.OLDHASH.css\n3. MvcFrontendKitBuild runs, creates global.NEWHASH.css (new hash)\n4. SDK looks for global.OLDHASH.css which no longer exists -> FAIL\n\nThe early cleanup ensures dist is empty when SDK runs asset discovery,\nthen MvcFrontendKitBuild creates fresh files that SDK discovers correctly.\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

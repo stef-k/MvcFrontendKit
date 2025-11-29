@@ -13,15 +13,53 @@
              AssemblyFile="$(MSBuildThisFileDirectory)..\tasks\$(_MvcFrontendKitTaskFolder)\MvcFrontendKit.Build.dll" />
 
   <!--
+    EARLY CLEANUP: Remove stale dist files BEFORE any StaticWebAssets discovery.
+
+    This target runs at the very beginning of the build process to remove
+    any existing hashed files in wwwroot/dist from previous builds. This prevents
+    StaticWebAssets from discovering and registering stale files that will be
+    replaced with different hashes when we bundle.
+
+    Without this early cleanup, the following happens:
+    1. Previous build created global.OLDHASH.css
+    2. New build starts, SDK discovers and registers global.OLDHASH.css
+    3. MvcFrontendKitBuild runs, creates global.NEWHASH.css (content changed = new hash)
+    4. SDK looks for global.OLDHASH.css which no longer exists -> BUILD FAILS
+
+    By cleaning early, we ensure:
+    1. Dist is empty when SDK runs any asset discovery
+    2. MvcFrontendKitBuild creates fresh files
+    3. SDK discovers only the new files with correct hashes
+  -->
+  <Target Name="MvcFrontendKitCleanDist"
+          BeforeTargets="BeforeBuild;PrepareForBuild;ResolveAssemblyReferences"
+          Condition="'$(MvcFrontendKitEnabled)' == 'true' AND '$(_IsPublishing)' != 'true' AND ('$(Configuration)' == 'Release' OR '$(MvcFrontendKitSkipOnDebug)' != 'true')">
+
+    <PropertyGroup>
+      <_MvcFrontendKitDistPath>$(MSBuildProjectDirectory)\wwwroot\dist</_MvcFrontendKitDistPath>
+    </PropertyGroup>
+
+    <!-- Only clean if dist exists and contains files -->
+    <Message Condition="Exists('$(_MvcFrontendKitDistPath)')"
+             Text="MvcFrontendKit: Cleaning stale dist files before build..."
+             Importance="normal" />
+
+    <RemoveDir Directories="$(_MvcFrontendKitDistPath)"
+               Condition="Exists('$(_MvcFrontendKitDistPath)')" />
+
+  </Target>
+
+  <!--
     Hook into the Build process BEFORE StaticWebAssets discovery.
 
     Target ordering for ASP.NET Core web apps:
-    1. PrepareForBuild
-    2. ResolveProjectReferences
-    3. MvcFrontendKitBuild (our target) - creates wwwroot/dist files
-    4. ResolveStaticWebAssetsInputs - discovers wwwroot files including our bundles
-    5. GenerateStaticWebAssetsManifest - creates staticwebassets.build.json
-    6. Build completion
+    1. MvcFrontendKitCleanDist (our early cleanup) - removes stale dist files
+    2. PrepareForBuild
+    3. ResolveProjectReferences
+    4. MvcFrontendKitBuild (our target) - creates wwwroot/dist files
+    5. ResolveStaticWebAssetsInputs - discovers wwwroot files including our bundles
+    6. GenerateStaticWebAssetsManifest - creates staticwebassets.build.json
+    7. Build completion
 
     CRITICAL: We must run BEFORE ResolveStaticWebAssetsInputs so that our
     generated bundles in wwwroot/dist are included in the static web assets manifest.
