@@ -118,10 +118,18 @@ When implementing features:
 3. Do not add undocumented features or change core semantics
 4. For new features, propose spec changes via issue first
 
+## Preprocessor Support (TypeScript & SCSS)
+
+MvcFrontendKit supports automatic compilation of TypeScript and SCSS files:
+
+- **TypeScript** (`.ts`, `.tsx`): Auto-detected and compiled via esbuild's native TypeScript loader
+- **SCSS/Sass** (`.scss`, `.sass`): Auto-detected and compiled via bundled Dart Sass compiler
+
+This is zero-config - just use the file extensions and the tool handles compilation automatically.
+
 ## Reserved Extension Points
 
 Do not use these config keys (reserved for future versions):
-- `preprocessors` - for TypeScript/SCSS integration
 - `cdn` - for CDN hosting, SRI, etc.
 
 ## Browser Compatibility

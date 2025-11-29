@@ -497,13 +497,15 @@ public static class FrontendHtmlHelpers
 
         foreach (var cssFile in cssFiles)
         {
-            var fullPath = Path.Combine(contentRoot, cssFile);
-            if (!File.Exists(fullPath))
+            // For SCSS/Sass files, look for the compiled .css version
+            var resolvedFile = ResolveDevCssFile(cssFile, contentRoot);
+            if (resolvedFile == null)
             {
                 continue;
             }
 
-            var url = ConvertToUrl(cssFile, config.WebRoot);
+            var url = ConvertToUrl(resolvedFile, config.WebRoot);
+            var fullPath = Path.Combine(contentRoot, resolvedFile);
             var version = File.GetLastWriteTimeUtc(fullPath).Ticks;
             tags.Add($"  <link rel=\"stylesheet\" href=\"{HtmlEncoder.Default.Encode(url)}?v={version}\" />");
         }
@@ -523,18 +525,88 @@ public static class FrontendHtmlHelpers
 
         foreach (var jsFile in jsFiles)
         {
-            var fullPath = Path.Combine(contentRoot, jsFile);
-            if (!File.Exists(fullPath))
+            // For TypeScript files, look for the compiled .js version
+            var resolvedFile = ResolveDevJsFile(jsFile, contentRoot);
+            if (resolvedFile == null)
             {
                 continue;
             }
 
-            var url = ConvertToUrl(jsFile, config.WebRoot);
+            var url = ConvertToUrl(resolvedFile, config.WebRoot);
+            var fullPath = Path.Combine(contentRoot, resolvedFile);
             var version = File.GetLastWriteTimeUtc(fullPath).Ticks;
             tags.Add($"  <script type=\"module\" src=\"{HtmlEncoder.Default.Encode(url)}?v={version}\"></script>");
         }
 
         return new HtmlString(string.Join("\n", tags));
+    }
+
+    /// <summary>
+    /// Resolves a CSS file path for development mode.
+    /// If the config declares a .scss/.sass file, looks for the compiled .css version.
+    /// Returns null if no suitable file is found.
+    /// </summary>
+    private static string? ResolveDevCssFile(string cssFile, string contentRoot)
+    {
+        var fullPath = Path.Combine(contentRoot, cssFile);
+
+        // If it's a plain CSS file and exists, use it directly
+        if (cssFile.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            return File.Exists(fullPath) ? cssFile : null;
+        }
+
+        // For SCSS/Sass files, look for the compiled CSS version
+        if (cssFile.EndsWith(".scss", StringComparison.OrdinalIgnoreCase) ||
+            cssFile.EndsWith(".sass", StringComparison.OrdinalIgnoreCase))
+        {
+            // Try the compiled .css file (site.scss -> site.css)
+            var compiledCss = Path.ChangeExtension(cssFile, ".css");
+            var compiledPath = Path.Combine(contentRoot, compiledCss);
+            if (File.Exists(compiledPath))
+            {
+                return compiledCss;
+            }
+
+            // Fall back to original file if it somehow exists (shouldn't in browsers)
+            return File.Exists(fullPath) ? cssFile : null;
+        }
+
+        return File.Exists(fullPath) ? cssFile : null;
+    }
+
+    /// <summary>
+    /// Resolves a JS file path for development mode.
+    /// If the config declares a .ts/.tsx file, looks for the compiled .js version.
+    /// Returns null if no suitable file is found.
+    /// </summary>
+    private static string? ResolveDevJsFile(string jsFile, string contentRoot)
+    {
+        var fullPath = Path.Combine(contentRoot, jsFile);
+
+        // If it's a plain JS file and exists, use it directly
+        if (jsFile.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            return File.Exists(fullPath) ? jsFile : null;
+        }
+
+        // For TypeScript files, look for the compiled JS version
+        if (jsFile.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+            jsFile.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase))
+        {
+            // Try the compiled .js file (site.ts -> site.js)
+            var compiledJs = Path.ChangeExtension(jsFile, ".js");
+            var compiledPath = Path.Combine(contentRoot, compiledJs);
+            if (File.Exists(compiledPath))
+            {
+                return compiledJs;
+            }
+
+            // Fall back to original file if it somehow exists (shouldn't in browsers)
+            return File.Exists(fullPath) ? jsFile : null;
+        }
+
+        return File.Exists(fullPath) ? jsFile : null;
     }
 
     private static string ConvertToUrl(string filePath, string webRoot)

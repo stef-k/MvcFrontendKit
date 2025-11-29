@@ -279,7 +279,47 @@ public class BundleOrchestrator
     {
         _logger.LogInformation("Building in areas mode...");
 
+        // Build global bundles (same as single mode)
         await BuildSingleModeAsync(runner, distJsDir, distCssDir, manifest, cancellationToken);
+
+        // Build per-area bundles
+        foreach (var areaEntry in _config.Areas)
+        {
+            var areaName = areaEntry.Key;
+            var areaConfig = areaEntry.Value;
+
+            _logger.LogInformation("  Building area bundle: {AreaName}", areaName);
+
+            if (areaConfig.Js.Any())
+            {
+                var jsResult = await BuildJsBundle(
+                    runner,
+                    areaConfig.Js,
+                    Path.Combine(distJsDir, $"area-{areaName.ToLowerInvariant()}.[hash].js"),
+                    cancellationToken);
+
+                if (jsResult != null)
+                {
+                    manifest[$"area:{areaName}:js"] = new List<string> { jsResult };
+                }
+            }
+
+            if (areaConfig.Css.Any())
+            {
+                var cssResult = await BuildCssBundle(
+                    runner,
+                    areaConfig.Css,
+                    Path.Combine(distCssDir, $"area-{areaName.ToLowerInvariant()}.[hash].css"),
+                    cancellationToken);
+
+                if (cssResult != null)
+                {
+                    manifest[$"area:{areaName}:css"] = new List<string> { cssResult };
+                }
+            }
+        }
+
+        // Components are built by BuildBundlesAsync after the mode-specific logic
     }
 
     private async Task BuildViewsModeAsync(
@@ -470,8 +510,9 @@ public class BundleOrchestrator
     }
 
     /// <summary>
-    /// Discovers view JS files by scanning jsRoot and matching against conventions.
-    /// Returns a dictionary of view key -> relative JS file path.
+    /// Discovers view JS/TS files by scanning jsRoot and matching against conventions.
+    /// Returns a dictionary of view key -> relative JS/TS file path.
+    /// Supports .js, .ts, and .tsx extensions (auto-detected).
     /// </summary>
     private Dictionary<string, string> DiscoverViewJsByConvention()
     {
@@ -484,9 +525,12 @@ public class BundleOrchestrator
             return result;
         }
 
-        // Scan for all JS files
-        var jsFiles = Directory.GetFiles(jsRootPath, "*.js", SearchOption.AllDirectories);
-        _logger.LogInformation("Found {Count} JS files in {JsRoot}", jsFiles.Length, _config.JsRoot);
+        // Scan for all JS and TypeScript files
+        var jsFiles = Directory.GetFiles(jsRootPath, "*.js", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(jsRootPath, "*.ts", SearchOption.AllDirectories))
+            .Concat(Directory.GetFiles(jsRootPath, "*.tsx", SearchOption.AllDirectories))
+            .ToArray();
+        _logger.LogInformation("Found {Count} JS/TS files in {JsRoot}", jsFiles.Length, _config.JsRoot);
 
         foreach (var jsFile in jsFiles)
         {
@@ -522,8 +566,9 @@ public class BundleOrchestrator
     }
 
     /// <summary>
-    /// Discovers view CSS files by scanning cssRoot and matching against conventions.
-    /// Returns a dictionary of view key -> relative CSS file path.
+    /// Discovers view CSS/SCSS files by scanning cssRoot and matching against conventions.
+    /// Returns a dictionary of view key -> relative CSS/SCSS file path.
+    /// Supports .css, .scss, and .sass extensions (auto-detected).
     /// </summary>
     private Dictionary<string, string> DiscoverViewCssByConvention()
     {
@@ -536,9 +581,12 @@ public class BundleOrchestrator
             return result;
         }
 
-        // Scan for all CSS files
-        var cssFiles = Directory.GetFiles(cssRootPath, "*.css", SearchOption.AllDirectories);
-        _logger.LogInformation("Found {Count} CSS files in {CssRoot}", cssFiles.Length, _config.CssRoot);
+        // Scan for all CSS and SCSS/Sass files
+        var cssFiles = Directory.GetFiles(cssRootPath, "*.css", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(cssRootPath, "*.scss", SearchOption.AllDirectories))
+            .Concat(Directory.GetFiles(cssRootPath, "*.sass", SearchOption.AllDirectories))
+            .ToArray();
+        _logger.LogInformation("Found {Count} CSS/SCSS files in {CssRoot}", cssFiles.Length, _config.CssRoot);
 
         foreach (var cssFile in cssFiles)
         {
@@ -586,12 +634,24 @@ public class BundleOrchestrator
         var normalizedJsPath = jsPath.Replace("\\", "/");
         var normalizedPattern = scriptBasePattern.Replace("\\", "/");
 
-        // Remove .js extension from the file path
-        if (!normalizedJsPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        // Remove .js/.ts/.tsx extension from the file path
+        string jsPathWithoutExt;
+        if (normalizedJsPath.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase))
+        {
+            jsPathWithoutExt = normalizedJsPath.Substring(0, normalizedJsPath.Length - 4);
+        }
+        else if (normalizedJsPath.EndsWith(".ts", StringComparison.OrdinalIgnoreCase))
+        {
+            jsPathWithoutExt = normalizedJsPath.Substring(0, normalizedJsPath.Length - 3);
+        }
+        else if (normalizedJsPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            jsPathWithoutExt = normalizedJsPath.Substring(0, normalizedJsPath.Length - 3);
+        }
+        else
         {
             return false;
         }
-        var jsPathWithoutExt = normalizedJsPath.Substring(0, normalizedJsPath.Length - 3);
 
         // Remove "Page" suffix if present (e.g., indexPage.js -> index)
         var jsPathBase = jsPathWithoutExt;
@@ -630,8 +690,9 @@ public class BundleOrchestrator
     }
 
     /// <summary>
-    /// Tries to match a CSS file path against a CSS pattern.
+    /// Tries to match a CSS/SCSS file path against a CSS pattern.
     /// Extracts tokens (Controller, Action, Area) from the path.
+    /// Supports .css, .scss, and .sass extensions.
     /// </summary>
     private bool TryMatchCssPath(string cssPath, string cssPattern, out Dictionary<string, string> tokens)
     {
@@ -641,12 +702,24 @@ public class BundleOrchestrator
         var normalizedCssPath = cssPath.Replace("\\", "/");
         var normalizedPattern = cssPattern.Replace("\\", "/");
 
-        // Remove .css extension from both
-        if (!normalizedCssPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        // Remove .css/.scss/.sass extension from the file path
+        string cssPathWithoutExt;
+        if (normalizedCssPath.EndsWith(".scss", StringComparison.OrdinalIgnoreCase))
+        {
+            cssPathWithoutExt = normalizedCssPath.Substring(0, normalizedCssPath.Length - 5);
+        }
+        else if (normalizedCssPath.EndsWith(".sass", StringComparison.OrdinalIgnoreCase))
+        {
+            cssPathWithoutExt = normalizedCssPath.Substring(0, normalizedCssPath.Length - 5);
+        }
+        else if (normalizedCssPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+        {
+            cssPathWithoutExt = normalizedCssPath.Substring(0, normalizedCssPath.Length - 4);
+        }
+        else
         {
             return false;
         }
-        var cssPathWithoutExt = normalizedCssPath.Substring(0, normalizedCssPath.Length - 4);
 
         var patternWithoutExt = normalizedPattern;
         if (patternWithoutExt.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
@@ -792,9 +865,35 @@ public class BundleOrchestrator
             return null;
         }
 
+        // Auto-detect TypeScript files and configure appropriate loaders
+        var loaders = DetectTypeScriptLoaders(absoluteEntries);
+        if (loaders.Any())
+        {
+            _logger.LogInformation("  TypeScript detected, configured loaders: {Loaders}",
+                string.Join(", ", loaders.Select(l => $"{l.Key}={l.Value}")));
+        }
+
+        // When there are multiple entry files, create a virtual entry that imports them all
+        // This is required because esbuild cannot use --outfile with multiple entry points
+        string? virtualEntry = null;
+        List<string> effectiveEntries;
+
+        if (absoluteEntries.Count > 1)
+        {
+            _logger.LogInformation("  Multiple entry files detected, creating virtual entry");
+            virtualEntry = await CreateVirtualJsEntry(absoluteEntries);
+            effectiveEntries = new List<string> { virtualEntry };
+            // Always add .ts loader when using virtual entry (it's a .ts file)
+            loaders[".ts"] = "ts";
+        }
+        else
+        {
+            effectiveEntries = absoluteEntries;
+        }
+
         var options = new EsbuildOptions
         {
-            EntryPoints = absoluteEntries,
+            EntryPoints = effectiveEntries,
             OutFile = Path.Combine(_projectRoot, outFile),
             Minify = true,
             Sourcemap = _config.Esbuild.JsSourcemap,
@@ -803,12 +902,23 @@ public class BundleOrchestrator
             WorkingDirectory = _projectRoot
         };
 
+        if (loaders.Any())
+        {
+            options.Loader = loaders;
+        }
+
         if (_config.ImportMap.ProdStrategy == "bundle" && _config.ImportMap.Entries.Any())
         {
             options.External = _config.ImportMap.Entries.Keys.ToList();
         }
 
         var result = await runner.RunAsync(options, cancellationToken);
+
+        // Clean up virtual entry file
+        if (virtualEntry != null)
+        {
+            try { File.Delete(virtualEntry); } catch { }
+        }
 
         if (!result.Success)
         {
@@ -823,6 +933,11 @@ public class BundleOrchestrator
 
         if (File.Exists(options.OutFile))
         {
+            // If destination already exists (same hash, same content), delete it first
+            if (File.Exists(actualOutFile))
+            {
+                File.Delete(actualOutFile);
+            }
             File.Move(options.OutFile, actualOutFile);
         }
 
@@ -836,7 +951,7 @@ public class BundleOrchestrator
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Building CSS bundle: {OutFile}", outFile);
-        _logger.LogInformation("  CSS files ({Count}):", cssFiles.Count);
+        _logger.LogInformation("  CSS/SCSS files ({Count}):", cssFiles.Count);
         foreach (var css in cssFiles)
         {
             _logger.LogInformation("    - {File}", css);
@@ -853,11 +968,35 @@ public class BundleOrchestrator
         var missingFiles = absoluteFiles.Where(f => !File.Exists(f)).ToList();
         if (missingFiles.Any())
         {
-            _logger.LogError("Missing CSS files: {Files}", string.Join(", ", missingFiles));
+            _logger.LogError("Missing CSS/SCSS files: {Files}", string.Join(", ", missingFiles));
             return null;
         }
 
-        var virtualEntry = await CreateVirtualCssEntry(absoluteFiles);
+        // Pre-compile any SCSS/Sass files to CSS
+        var compiledFiles = new List<string>();
+        var tempCssFiles = new List<string>();
+
+        foreach (var file in absoluteFiles)
+        {
+            if (file.EndsWith(".scss", StringComparison.OrdinalIgnoreCase) ||
+                file.EndsWith(".sass", StringComparison.OrdinalIgnoreCase))
+            {
+                var compiledCss = await CompileScssAsync(file, cancellationToken);
+                if (compiledCss == null)
+                {
+                    _logger.LogError("SCSS compilation failed for: {File}", file);
+                    return null;
+                }
+                compiledFiles.Add(compiledCss);
+                tempCssFiles.Add(compiledCss);
+            }
+            else
+            {
+                compiledFiles.Add(file);
+            }
+        }
+
+        var virtualEntry = await CreateVirtualCssEntry(compiledFiles);
 
         var options = new EsbuildOptions
         {
@@ -871,9 +1010,14 @@ public class BundleOrchestrator
 
         var result = await runner.RunAsync(options, cancellationToken);
 
+        // Clean up temporary files
         try
         {
             File.Delete(virtualEntry);
+            foreach (var tempFile in tempCssFiles)
+            {
+                File.Delete(tempFile);
+            }
         }
         catch { }
 
@@ -890,10 +1034,61 @@ public class BundleOrchestrator
 
         if (File.Exists(options.OutFile))
         {
+            // If destination already exists (same hash, same content), delete it first
+            if (File.Exists(actualOutFile))
+            {
+                File.Delete(actualOutFile);
+            }
             File.Move(options.OutFile, actualOutFile);
         }
 
         return relativeUrl;
+    }
+
+    /// <summary>
+    /// Compiles an SCSS/Sass file to CSS using the Dart Sass compiler.
+    /// Returns the path to the compiled CSS file, or null if compilation failed.
+    /// </summary>
+    private async Task<string?> CompileScssAsync(string scssFile, CancellationToken cancellationToken)
+    {
+        var sassRunner = new SassRunner(_logger);
+
+        if (!sassRunner.IsAvailable())
+        {
+            _logger.LogError("Sass compiler not available. Cannot compile SCSS file: {File}", scssFile);
+            _logger.LogError("Make sure the Dart Sass binaries are included in the runtimes folder.");
+            return null;
+        }
+
+        // Create output path in obj/frontend directory
+        var tempDir = Path.Combine(_projectRoot, "obj", "frontend", "scss");
+        Directory.CreateDirectory(tempDir);
+
+        var outputFileName = Path.GetFileNameWithoutExtension(scssFile) + ".css";
+        var outputPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}_{outputFileName}");
+
+        _logger.LogInformation("  Compiling SCSS: {Input} -> {Output}", scssFile, outputPath);
+
+        var options = new SassOptions
+        {
+            Compressed = false, // We'll let esbuild do the minification
+            SourceMap = false,
+            LoadPaths = new List<string>
+            {
+                Path.GetDirectoryName(scssFile) ?? _projectRoot,
+                Path.Combine(_projectRoot, _config.CssRoot)
+            }
+        };
+
+        var result = await sassRunner.CompileAsync(scssFile, outputPath, options, cancellationToken);
+
+        if (!result.Success)
+        {
+            _logger.LogError("SCSS compilation failed: {Error}", result.Error);
+            return null;
+        }
+
+        return outputPath;
     }
 
     private async Task<string> CreateVirtualCssEntry(List<string> cssFiles)
@@ -907,6 +1102,25 @@ public class BundleOrchestrator
         foreach (var cssFile in cssFiles)
         {
             sb.AppendLine($"@import \"{cssFile.Replace("\\", "/")}\";");
+        }
+
+        await WriteAllTextAsync(entryFile, sb.ToString());
+        return entryFile;
+    }
+
+    private async Task<string> CreateVirtualJsEntry(List<string> jsFiles)
+    {
+        var tempDir = Path.Combine(_projectRoot, "obj", "frontend");
+        Directory.CreateDirectory(tempDir);
+
+        // Use .ts extension so esbuild can handle both .ts and .js imports
+        var entryFile = Path.Combine(tempDir, $"js-entry-{Guid.NewGuid()}.ts");
+        var sb = new StringBuilder();
+
+        // Import and re-export all entry files to ensure side effects are included
+        foreach (var jsFile in jsFiles)
+        {
+            sb.AppendLine($"import \"{jsFile.Replace("\\", "/")}\";");
         }
 
         await WriteAllTextAsync(entryFile, sb.ToString());
@@ -980,5 +1194,29 @@ public class BundleOrchestrator
             // Take first 4 bytes (8 hex chars) for a short but unique hash
             return BitConverter.ToString(hashBytes, 0, 4).Replace("-", "").ToLowerInvariant();
         }
+    }
+
+    /// <summary>
+    /// Detects TypeScript files in the entry list and returns appropriate esbuild loaders.
+    /// esbuild natively supports TypeScript via the 'ts' and 'tsx' loaders.
+    /// </summary>
+    private Dictionary<string, string> DetectTypeScriptLoaders(List<string> entryFiles)
+    {
+        var loaders = new Dictionary<string, string>();
+
+        var hasTs = entryFiles.Any(f => f.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) &&
+                                        !f.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase));
+        var hasTsx = entryFiles.Any(f => f.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase));
+
+        if (hasTs)
+        {
+            loaders[".ts"] = "ts";
+        }
+        if (hasTsx)
+        {
+            loaders[".tsx"] = "tsx";
+        }
+
+        return loaders;
     }
 }

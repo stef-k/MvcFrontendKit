@@ -19,10 +19,19 @@ class Program
             "init" => InitCommand.Execute(args.Contains("--force")),
             "check" => HandleCheckCommand(args),
             "build" => HandleBuildCommand(args),
+            "dev" => HandleDevCommand(args),
             "help" or "--help" or "-h" => ShowHelp(),
             "version" or "--version" or "-v" => ShowVersion(),
             _ => UnknownCommand(command)
         };
+    }
+
+    static int HandleDevCommand(string[] args)
+    {
+        var verbose = args.Contains("--verbose") || args.Contains("-v");
+        var watch = args.Contains("--watch") || args.Contains("-w");
+
+        return DevCommand.Execute(verbose, watch);
     }
 
     static int HandleCheckCommand(string[] args)
@@ -59,6 +68,7 @@ class Program
         Console.WriteLine("Commands:");
         Console.WriteLine("  init            Create frontend.config.yaml with default settings");
         Console.WriteLine("  check           Validate config and check if assets exist");
+        Console.WriteLine("  dev             Compile TypeScript/SCSS for development");
         Console.WriteLine("  build           Build frontend bundles (production)");
         Console.WriteLine("  help            Show this help message");
         Console.WriteLine("  version         Show version information");
@@ -85,20 +95,35 @@ class Program
         Console.WriteLine("    --all         Check all discoverable views");
         Console.WriteLine("    --skip-imports  Skip import path validation");
         Console.WriteLine();
+        Console.WriteLine("  dev [options]");
+        Console.WriteLine("    Compile TypeScript and SCSS files for development.");
+        Console.WriteLine("    Creates .js files alongside .ts files, and .css files alongside .scss files.");
+        Console.WriteLine("    --verbose     Show detailed compilation output");
+        Console.WriteLine();
         Console.WriteLine("  build [options]");
         Console.WriteLine("    Build frontend bundles for production.");
         Console.WriteLine("    --dry-run     Preview bundles without writing files");
         Console.WriteLine("    --verbose     Show detailed build output");
         Console.WriteLine();
+        Console.WriteLine("Workflow:");
+        Console.WriteLine("  Development:");
+        Console.WriteLine("    1. Run 'dotnet frontend dev' to compile TS/SCSS to JS/CSS");
+        Console.WriteLine("    2. Run 'dotnet run' to start your app (serves raw JS/CSS files)");
+        Console.WriteLine("    3. After changes, re-run 'dotnet frontend dev'");
+        Console.WriteLine();
+        Console.WriteLine("  Production:");
+        Console.WriteLine("    Run 'dotnet publish -c Release' which automatically:");
+        Console.WriteLine("    - Compiles TS/SCSS");
+        Console.WriteLine("    - Bundles and minifies all assets");
+        Console.WriteLine("    - Generates fingerprinted filenames");
+        Console.WriteLine("    - Creates frontend.manifest.json");
+        Console.WriteLine();
         Console.WriteLine("Examples:");
         Console.WriteLine("  dotnet frontend init");
-        Console.WriteLine("  dotnet frontend init --force");
-        Console.WriteLine("  dotnet frontend check");
-        Console.WriteLine("  dotnet frontend check --verbose");
-        Console.WriteLine("  dotnet frontend check --view \"Areas/Admin/Settings/Index\"");
+        Console.WriteLine("  dotnet frontend dev");
+        Console.WriteLine("  dotnet frontend dev --verbose");
         Console.WriteLine("  dotnet frontend check --all");
         Console.WriteLine("  dotnet frontend build --dry-run");
-        Console.WriteLine("  dotnet frontend build --verbose");
         return 0;
     }
 

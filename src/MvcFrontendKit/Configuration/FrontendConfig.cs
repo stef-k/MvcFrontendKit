@@ -52,8 +52,20 @@ public class FrontendConfig
     [YamlMember(Alias = "components")]
     public Dictionary<string, ComponentConfig> Components { get; set; } = new();
 
+    [YamlMember(Alias = "areas")]
+    public Dictionary<string, AreaConfig> Areas { get; set; } = new();
+
     [YamlMember(Alias = "esbuild")]
     public EsbuildConfig Esbuild { get; set; } = new();
+}
+
+public class AreaConfig
+{
+    [YamlMember(Alias = "js")]
+    public List<string> Js { get; set; } = new();
+
+    [YamlMember(Alias = "css")]
+    public List<string> Css { get; set; } = new();
 }
 
 public class OutputConfig

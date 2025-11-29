@@ -25,8 +25,21 @@ A small, .NET-native helper tool named **MvcFrontendKit** that:
 Out of scope (for this version):
 
 - Full SPA-style integration for Vue/React (dev servers, HMR).
-- TypeScript / SCSS / Less as first-class upstream source languages (tool operates on JS/CSS).
 - CDN hosting, SRI hashes, and advanced incremental build caching (reserved as future extensions).
+
+### 1.1 Preprocessor Support (TypeScript & SCSS)
+
+Starting with v1.0, MvcFrontendKit includes **automatic preprocessor support** for TypeScript and SCSS:
+
+- **TypeScript (.ts, .tsx)**: Automatically detected and compiled using esbuild's native TypeScript support. No configuration required.
+- **SCSS/Sass (.scss, .sass)**: Automatically detected and compiled using the bundled Dart Sass compiler. No configuration required.
+
+This is a zero-config feature:
+- Place `.ts`/`.tsx` files in your `jsRoot` directory alongside or instead of `.js` files
+- Place `.scss`/`.sass` files in your `cssRoot` directory alongside or instead of `.css` files
+- The tool automatically detects file extensions and applies the appropriate compilation
+
+**Note**: This provides compilation only (TS→JS, SCSS→CSS), not editor/IDE support. For editor features like IntelliSense and type checking, install the appropriate language tools in your development environment.
 
 > **Important clarification**
 > All naming/casing logic in this spec applies to **frontend asset paths** (JS/CSS files under `wwwroot`, and references to static resources like `/img` or `/icons`).
@@ -775,10 +788,21 @@ To keep room for future evolution:
 
 - `configVersion` — for evolving config schema.
 - Reserved top-level keys:
-  - `preprocessors` — for TypeScript/SCSS integration later.
   - `cdn` — for CDN hosting, SRI, and related features.
 
 These keys must not be reused for other semantics in this version, so they can be safely added in future versions.
+
+### 12.1 Preprocessor Support (Implemented)
+
+TypeScript and SCSS support has been implemented as an **implicit, zero-config feature** rather than via a `preprocessors` config key. The tool automatically detects file extensions and applies the appropriate compilation:
+
+- **TypeScript**: `.ts` and `.tsx` files are automatically compiled using esbuild's native TypeScript loader
+- **SCSS/Sass**: `.scss` and `.sass` files are automatically compiled using the bundled Dart Sass compiler
+
+This approach was chosen because:
+1. It requires no configuration from users
+2. It follows the "convention over configuration" philosophy
+3. Mixed projects (JS + TS, CSS + SCSS) work seamlessly
 
 ---
 

@@ -154,7 +154,186 @@ Add helpers to your `_Layout.cshtml` or equivalent:
   - Missing JS/CSS declared in config → build fails
   - Invalid or missing manifest in Prod → app startup fails (no silent fallback to Dev mode)
 
+- **TypeScript & SCSS Support** (zero-config)
+  - TypeScript (`.ts`, `.tsx`) compiled automatically via esbuild
+  - SCSS/Sass (`.scss`, `.sass`) compiled automatically via bundled Dart Sass
+  - Just use the file extensions - no configuration needed
+
 See **`SPEC.md`** for the full formal specification.
+
+---
+
+## HTML Helpers Reference
+
+MvcFrontendKit provides HTML helpers for rendering script and link tags in your Razor views.
+
+### Layout Helpers
+
+Use these in your `_Layout.cshtml`:
+
+```cshtml
+@* Import map for bare module imports (Dev only) *@
+@Html.FrontendImportMap()
+
+@* Global CSS (from global.css in config) *@
+@Html.FrontendGlobalStyles()
+
+@* View-specific CSS (convention or override) *@
+@Html.FrontendViewStyles()
+
+@* Global JS (from global.js in config) *@
+@Html.FrontendGlobalScripts()
+
+@* View-specific JS (convention or override) *@
+@Html.FrontendViewScripts()
+
+@* Debug panel (renders only in Development) *@
+@Html.FrontendDebugInfo()
+```
+
+### Component Helper
+
+Use in views to load named components:
+
+```cshtml
+@* Load a component defined in frontend.config.yaml *@
+@Html.FrontendComponent("datepicker")
+
+@* Load multiple components *@
+@Html.FrontendComponent("calendar")
+@Html.FrontendComponent("modal")
+```
+
+Components are deduplicated per-request - calling `@Html.FrontendComponent("datepicker")` multiple times only renders the tags once.
+
+### Area Helper
+
+For area-specific bundles (when using `areas` mode):
+
+```cshtml
+@* In Areas/Admin/_ViewStart.cshtml or layout *@
+@Html.FrontendAreaScripts("Admin")
+@Html.FrontendAreaStyles("Admin")
+```
+
+### Helper Output
+
+**Development:**
+```html
+<script type="module" src="/js/site.js?v=638123456789"></script>
+<link rel="stylesheet" href="/css/site.css?v=638123456789">
+```
+
+**Production:**
+```html
+<script src="/dist/js/global.a1b2c3d4.js"></script>
+<link rel="stylesheet" href="/dist/css/global.e5f6g7h8.css">
+```
+
+---
+
+## TypeScript & SCSS Support
+
+MvcFrontendKit automatically compiles TypeScript and SCSS files - no configuration required.
+
+### TypeScript
+
+Place `.ts` or `.tsx` files anywhere you would normally place `.js` files:
+
+```text
+wwwroot/
+  js/
+    site.ts              # Global TypeScript entry
+    Home/
+      Index.ts           # Per-view TypeScript
+    components/
+      calendar.tsx       # Component with JSX
+```
+
+The tool automatically:
+- Detects `.ts`/`.tsx` extensions
+- Applies esbuild's native TypeScript loader
+- Compiles to JavaScript during bundling
+
+**Example config:**
+```yaml
+global:
+  js:
+    - wwwroot/js/site.ts    # TypeScript works directly
+
+views:
+  overrides:
+    "Views/Home/Index":
+      js:
+        - wwwroot/js/Home/Index.ts
+```
+
+### SCSS/Sass
+
+Place `.scss` or `.sass` files anywhere you would normally place `.css` files:
+
+```text
+wwwroot/
+  css/
+    site.scss            # Global SCSS entry
+    Home/
+      Index.scss         # Per-view SCSS
+    components/
+      calendar.scss      # Component SCSS
+```
+
+The tool automatically:
+- Detects `.scss`/`.sass` extensions
+- Compiles to CSS using bundled Dart Sass (no Node.js required)
+- Passes the compiled CSS to esbuild for bundling and minification
+
+**Example config:**
+```yaml
+global:
+  css:
+    - wwwroot/css/site.scss    # SCSS works directly
+
+views:
+  overrides:
+    "Areas/Admin/Settings/Index":
+      css:
+        - wwwroot/css/custom/admin-settings.scss
+```
+
+### Mixed Projects
+
+You can mix JavaScript/TypeScript and CSS/SCSS freely:
+
+```yaml
+global:
+  js:
+    - wwwroot/js/vendor.js      # Plain JavaScript
+    - wwwroot/js/app.ts         # TypeScript
+  css:
+    - wwwroot/css/reset.css     # Plain CSS
+    - wwwroot/css/theme.scss    # SCSS
+```
+
+### Development Workflow
+
+For development, use the `dev` command to compile TypeScript and SCSS files:
+
+```bash
+# One-time compilation
+dotnet frontend dev
+
+# Watch mode (recommended)
+dotnet frontend dev --watch
+```
+
+This compiles your source files to `.js` and `.css` next to the originals, which are then served by the development helpers with cache-busting.
+
+### Important Notes
+
+- **Development vs Production**: Use `dotnet frontend dev` during development for fast compilation. Production builds (`dotnet publish -c Release`) handle bundling, minification, and fingerprinting automatically.
+- **Compilation only**: This provides TS→JS and SCSS→CSS compilation. For editor features like IntelliSense and type checking, install appropriate tools (TypeScript language server, Sass extension, etc.)
+- **No tsconfig.json required**: esbuild handles TypeScript compilation without a tsconfig. For strict type checking during development, you can add a tsconfig and run `tsc --noEmit` separately.
+- **SCSS imports**: `@import` and `@use` statements in SCSS are resolved relative to the file, and the `cssRoot` directory is added to the load path.
 
 ---
 
@@ -226,12 +405,17 @@ See **`SPEC.md`** for the full formal specification.
 
 ## CLI Commands
 
-The CLI tool provides diagnostics and build utilities:
+The CLI tool provides diagnostics, build utilities, and development compilation:
 
 ```bash
 # Initialize configuration
 dotnet frontend init
 dotnet frontend init --force    # Overwrite existing
+
+# Compile TypeScript/SCSS for development
+dotnet frontend dev             # One-time compilation
+dotnet frontend dev --watch     # Watch mode with auto-recompile
+dotnet frontend dev --verbose   # Show detailed output
 
 # Validate configuration and assets
 dotnet frontend check           # Basic check
@@ -242,6 +426,51 @@ dotnet frontend check --view "Areas/Admin/Settings/Index"  # Diagnose specific v
 # Build preview (dry-run)
 dotnet frontend build --dry-run # Preview bundles without building
 ```
+
+### Development Compilation (`dev`)
+
+The `dev` command compiles TypeScript and SCSS files to JavaScript and CSS for development. This enables you to use TypeScript and SCSS without running production builds during development.
+
+```bash
+# Compile all TypeScript/SCSS files from frontend.config.yaml
+dotnet frontend dev
+
+# Watch for changes and recompile automatically
+dotnet frontend dev --watch
+
+# Show compilation details
+dotnet frontend dev --verbose
+```
+
+**How it works:**
+- Reads `frontend.config.yaml` to find all TypeScript (`.ts`, `.tsx`) and SCSS (`.scss`, `.sass`) files
+- Compiles TypeScript to JavaScript using esbuild (fast, native compilation)
+- Compiles SCSS to CSS using Dart Sass (bundled, no Node.js required)
+- Output files are placed next to source files (e.g., `site.ts` → `site.js`)
+- Source maps are generated for debugging
+
+**Watch mode:**
+```bash
+dotnet frontend dev --watch
+```
+- Monitors your `jsRoot` and `cssRoot` directories for changes
+- Automatically recompiles when `.ts`, `.tsx`, `.scss`, or `.sass` files change
+- Shows compilation results in real-time
+- Press `Ctrl+C` to stop watching
+
+**Example workflow:**
+```bash
+# Terminal 1: Start your ASP.NET app
+dotnet watch run
+
+# Terminal 2: Watch and compile frontend assets
+dotnet frontend dev --watch
+```
+
+This gives you:
+- Hot reload for C# code (via `dotnet watch`)
+- Auto-compilation for TypeScript/SCSS (via `frontend dev --watch`)
+- Browser refresh to see changes
 
 ### View Diagnostics (`--view` and `--all`)
 
@@ -285,6 +514,155 @@ Shows:
 - All bundles that would be created
 - Input files and sizes
 - Estimated output sizes after minification
+
+---
+
+## Configuration Reference
+
+The `frontend.config.yaml` file controls all bundling behavior. Here's a complete reference:
+
+### Core Settings
+
+```yaml
+# Schema version (for future migrations)
+configVersion: 1
+
+# Bundling mode: "single", "areas", or "views" (recommended)
+mode: views
+
+# Base path for URL generation (for sub-path deployments)
+appBasePath: "/"
+
+# Directory paths
+webRoot: wwwroot           # Web root directory
+jsRoot: wwwroot/js         # JavaScript source directory
+cssRoot: wwwroot/css       # CSS source directory
+libRoot: wwwroot/lib       # Third-party libraries
+
+# Production output paths
+distUrlRoot: /dist         # URL prefix for bundles
+distJsSubPath: js          # Subdirectory for JS bundles
+distCssSubPath: css        # Subdirectory for CSS bundles
+```
+
+### Global Assets
+
+```yaml
+global:
+  js:
+    - wwwroot/js/site.ts         # Global JS (TypeScript supported)
+    - wwwroot/js/vendor.js       # Plain JS also works
+  css:
+    - wwwroot/css/site.scss      # Global CSS (SCSS supported)
+    - wwwroot/css/reset.css      # Plain CSS also works
+```
+
+### Views Configuration
+
+```yaml
+views:
+  # Auto-discovery by convention
+  jsAutoLinkByConvention: true
+  cssAutoLinkByConvention: true
+
+  # JS file conventions (tried in order)
+  conventions:
+    - viewPattern: "Views/{controller}/{action}"
+      scriptBasePattern: "wwwroot/js/{controller}/{action}"
+
+  # CSS file conventions
+  cssConventions:
+    - viewPattern: "Views/{controller}/{action}"
+      cssPattern: "wwwroot/css/{controller}/{action}"
+
+  # Explicit overrides (bypass conventions)
+  overrides:
+    "Views/Home/Index":
+      js:
+        - wwwroot/js/home/custom-index.ts
+      css:
+        - wwwroot/css/home/custom-index.scss
+```
+
+### Components
+
+```yaml
+components:
+  datepicker:
+    js:
+      - wwwroot/js/components/datepicker.ts
+    css:
+      - wwwroot/css/components/datepicker.scss
+    depends:
+      - calendar    # Load calendar component first
+
+  calendar:
+    js:
+      - wwwroot/js/components/calendar.ts
+    css:
+      - wwwroot/css/components/calendar.scss
+```
+
+Use components in views with `@Html.FrontendComponent("datepicker")`.
+
+### Areas
+
+```yaml
+areas:
+  Admin:
+    js:
+      - wwwroot/js/Areas/Admin/admin.ts
+    css:
+      - wwwroot/css/Areas/Admin/admin.scss
+```
+
+### Import Maps (Dev)
+
+```yaml
+importMap:
+  enabled: true
+  prodStrategy: bundle    # "bundle" (default) or "external"
+  entries:
+    vue: /lib/vue/vue.esm-browser.js
+    lodash: /lib/lodash-es/lodash.js
+```
+
+Allows bare imports in development:
+```javascript
+import { ref } from 'vue';
+```
+
+### CSS URL Policy
+
+```yaml
+cssUrlPolicy:
+  # Fail build if relative URLs (../img) found in CSS
+  allowRelative: false
+
+  # Resolve @import statements
+  resolveImports: true
+```
+
+### Output Options
+
+```yaml
+output:
+  cleanDistOnBuild: true   # Remove dist folder before build
+```
+
+### Esbuild Options
+
+```yaml
+esbuild:
+  jsTarget: es2020         # JavaScript target version
+  jsFormat: iife           # "iife" (default) or "esm"
+  jsSourcemap: true        # Generate source maps
+  cssSourcemap: true       # Generate CSS source maps
+```
+
+**jsFormat options:**
+- `iife` (default): Wraps bundle in `(function(){...})();` - works with regular `<script>` tags
+- `esm`: Preserves ES module syntax - requires `type="module"` on script tags
 
 ---
 
