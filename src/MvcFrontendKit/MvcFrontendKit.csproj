@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Version>1.0.0-preview.23</Version>
@@ -50,14 +50,14 @@
   <!-- Include build task assemblies in the package AFTER they are built -->
   <Target Name="IncludeBuildTaskInPackage" AfterTargets="BuildBuildTask" BeforeTargets="GenerateNuspec">
     <ItemGroup>
-      <!-- net472 for MSBuild.exe (.NET Framework) -->
+      <!-- net472 for MSBuild.exe (.NET Framework / Visual Studio) -->
       <_PackageFiles Include="$(MSBuildThisFileDirectory)..\..\build-output\tasks\net472\**\*">
         <PackagePath>tasks/net472/</PackagePath>
         <BuildAction>None</BuildAction>
       </_PackageFiles>
-      <!-- net9.0 for dotnet build (.NET Core) -->
-      <_PackageFiles Include="$(MSBuildThisFileDirectory)..\..\build-output\tasks\net9.0\**\*">
-        <PackagePath>tasks/net9.0/</PackagePath>
+      <!-- net10.0 for dotnet build (.NET 10+) -->
+      <_PackageFiles Include="$(MSBuildThisFileDirectory)..\..\build-output\tasks\net10.0\**\*">
+        <PackagePath>tasks/net10.0/</PackagePath>
         <BuildAction>None</BuildAction>
       </_PackageFiles>
     </ItemGroup>

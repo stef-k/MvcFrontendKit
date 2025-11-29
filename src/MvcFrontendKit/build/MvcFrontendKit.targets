@@ -2,10 +2,10 @@
 
   <!-- Detect MSBuild runtime and select appropriate task assembly -->
   <PropertyGroup>
-    <!-- dotnet build (.NET Core) uses net9.0 -->
-    <_MvcFrontendKitTaskFolder Condition="'$(MSBuildRuntimeType)' == 'Core'">net9.0</_MvcFrontendKitTaskFolder>
-    <!-- MSBuild.exe (.NET Framework) uses net472 -->
+    <!-- MSBuild.exe (.NET Framework / Visual Studio) uses net472 -->
     <_MvcFrontendKitTaskFolder Condition="'$(MSBuildRuntimeType)' != 'Core'">net472</_MvcFrontendKitTaskFolder>
+    <!-- dotnet build (.NET 10+) uses net10.0 -->
+    <_MvcFrontendKitTaskFolder Condition="'$(MSBuildRuntimeType)' == 'Core'">net10.0</_MvcFrontendKitTaskFolder>
   </PropertyGroup>
 
   <!-- Load the MSBuild task assembly based on runtime -->
