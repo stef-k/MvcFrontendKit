@@ -39,7 +39,17 @@
       "Bash(git push)",
       "Bash(git push:*)",
       "Bash(git -C:*)",
-      "Bash(git -C \"C:/Users/stef/source/repos/MvcFrontendKit\" commit -m \"$(cat <<''EOF''\nFix stale dist files causing StaticWebAssets build failures\n\nAdd early cleanup target (MvcFrontendKitCleanDist) that runs before\nPrepareForBuild and ResolveAssemblyReferences to remove wwwroot/dist\nbefore any StaticWebAssets discovery can register stale hashed files.\n\nWithout this fix:\n1. Previous build created global.OLDHASH.css\n2. New build starts, SDK discovers and registers global.OLDHASH.css\n3. MvcFrontendKitBuild runs, creates global.NEWHASH.css (new hash)\n4. SDK looks for global.OLDHASH.css which no longer exists -> FAIL\n\nThe early cleanup ensures dist is empty when SDK runs asset discovery,\nthen MvcFrontendKitBuild creates fresh files that SDK discovers correctly.\nEOF\n)\")"
+      "Bash(git -C \"C:/Users/stef/source/repos/MvcFrontendKit\" commit -m \"$(cat <<''EOF''\nFix stale dist files causing StaticWebAssets build failures\n\nAdd early cleanup target (MvcFrontendKitCleanDist) that runs before\nPrepareForBuild and ResolveAssemblyReferences to remove wwwroot/dist\nbefore any StaticWebAssets discovery can register stale hashed files.\n\nWithout this fix:\n1. Previous build created global.OLDHASH.css\n2. New build starts, SDK discovers and registers global.OLDHASH.css\n3. MvcFrontendKitBuild runs, creates global.NEWHASH.css (new hash)\n4. SDK looks for global.OLDHASH.css which no longer exists -> FAIL\n\nThe early cleanup ensures dist is empty when SDK runs asset discovery,\nthen MvcFrontendKitBuild creates fresh files that SDK discovers correctly.\nEOF\n)\")",
+      "Bash(dotnet --list-sdks:*)",
+      "Bash(tree:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(dir:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(dotnet tool run:*)",
+      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.scss\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.css\" --no-source-map --no-charset)",
+      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" --help)",
+      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\site.scss:C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\site.css\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.scss:C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.css\" --no-source-map --no-charset)",
+      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"wwwroot/css/site.scss:wwwroot/css/test1.css\" \"wwwroot/css/Home/Index.scss:wwwroot/css/Home/test2.css\" --no-source-map --no-charset)"
     ],
     "deny": [],
     "ask": []
