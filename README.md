@@ -37,7 +37,7 @@ This is the only package required for both **runtime** and **production builds**
 
 ### 2. Install the CLI tool (optional)
 
-The CLI provides diagnostic commands (`init`, `check`, `build --dry-run`) for development and CI workflows:
+The CLI provides commands for development compilation and diagnostics (`dev`, `init`, `check`, `build --dry-run`):
 
 ```bash
 # Global install (available everywhere)
@@ -48,7 +48,7 @@ dotnet new tool-manifest   # if you don't have one yet
 dotnet tool install MvcFrontendKit.Cli
 ```
 
-> **Note:** The CLI is **not required** for builds to work. Production bundling is handled by MSBuild targets in the main package. Install the CLI only if you want commands like `dotnet frontend check` or `dotnet frontend init`.
+> **Note:** The CLI is **not required** for production builds. Production bundling is handled by MSBuild targets in the main package. Install the CLI if you want to compile TypeScript/SCSS during development (`dotnet frontend dev`) or use diagnostic commands.
 
 ### 3. Generate configuration
 
@@ -102,7 +102,18 @@ Add helpers to your `_Layout.cshtml` or equivalent:
 
 ### 6. Develop and build
 
-- **Development:** Run `dotnet run` or `dotnet watch`. Raw files served from `wwwroot` with cache-busting.
+- **Development (with TypeScript/SCSS):**
+  ```bash
+  # Compile TS/SCSS once
+  dotnet frontend dev
+
+  # Or watch for changes (recommended)
+  dotnet frontend dev --watch
+  ```
+  Then run your app with `dotnet run` or `dotnet watch run`.
+
+- **Development (plain JS/CSS only):** Just run `dotnet run` - no compilation needed.
+
 - **Production:** Run `dotnet publish -c Release`. Bundles built automatically to `wwwroot/dist` with `frontend.manifest.json`.
 
 ---
