@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -815,7 +816,9 @@ public class BundleOrchestrator
             return null;
         }
 
-        var actualOutFile = options.OutFile.Replace("[hash]", GenerateHash());
+        // Compute content-based hash for deterministic filenames
+        var contentHash = ComputeFileHash(options.OutFile);
+        var actualOutFile = options.OutFile.Replace("[hash]", contentHash);
         var relativeUrl = ConvertToUrl(actualOutFile);
 
         if (File.Exists(options.OutFile))
@@ -880,7 +883,9 @@ public class BundleOrchestrator
             return null;
         }
 
-        var actualOutFile = options.OutFile.Replace("[hash]", GenerateHash());
+        // Compute content-based hash for deterministic filenames
+        var contentHash = ComputeFileHash(options.OutFile);
+        var actualOutFile = options.OutFile.Replace("[hash]", contentHash);
         var relativeUrl = ConvertToUrl(actualOutFile);
 
         if (File.Exists(options.OutFile))
@@ -956,8 +961,24 @@ public class BundleOrchestrator
         return viewKey.Replace("/", "-").Replace("\\", "-").ToLowerInvariant();
     }
 
-    private string GenerateHash()
+    /// <summary>
+    /// Computes a content-based hash of a file for deterministic fingerprinting.
+    /// Uses SHA256 truncated to 8 hex characters for cache-busting.
+    /// </summary>
+    private string ComputeFileHash(string filePath)
     {
-        return Guid.NewGuid().ToString("N").Substring(0, 8);
+        if (!File.Exists(filePath))
+        {
+            _logger.LogWarning("File not found for hashing: {Path}, using fallback", filePath);
+            return Guid.NewGuid().ToString("N").Substring(0, 8);
+        }
+
+        using (var sha256 = SHA256.Create())
+        using (var stream = File.OpenRead(filePath))
+        {
+            var hashBytes = sha256.ComputeHash(stream);
+            // Take first 4 bytes (8 hex chars) for a short but unique hash
+            return BitConverter.ToString(hashBytes, 0, 4).Replace("-", "").ToLowerInvariant();
+        }
     }
 }
