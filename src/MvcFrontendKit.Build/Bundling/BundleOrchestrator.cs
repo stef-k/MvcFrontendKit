@@ -939,6 +939,28 @@ public class BundleOrchestrator
                 File.Delete(actualOutFile);
             }
             File.Move(options.OutFile, actualOutFile);
+
+            // Also rename the source map file if it exists
+            var sourceMapFile = options.OutFile + ".map";
+            var actualSourceMapFile = actualOutFile + ".map";
+            if (File.Exists(sourceMapFile))
+            {
+                if (File.Exists(actualSourceMapFile))
+                {
+                    File.Delete(actualSourceMapFile);
+                }
+                File.Move(sourceMapFile, actualSourceMapFile);
+
+                // Update the sourceMappingURL comment in the JS file to point to renamed map
+                // Note: esbuild URL-encodes the filename, so [hash] becomes %5Bhash%5D
+                var jsContent = File.ReadAllText(actualOutFile);
+                var oldMapName = Path.GetFileName(sourceMapFile);
+                var oldMapNameEncoded = Uri.EscapeDataString(oldMapName);
+                var newMapName = Path.GetFileName(actualSourceMapFile);
+                jsContent = jsContent.Replace($"//# sourceMappingURL={oldMapName}", $"//# sourceMappingURL={newMapName}");
+                jsContent = jsContent.Replace($"//# sourceMappingURL={oldMapNameEncoded}", $"//# sourceMappingURL={newMapName}");
+                File.WriteAllText(actualOutFile, jsContent);
+            }
         }
 
         return relativeUrl;
@@ -1040,6 +1062,28 @@ public class BundleOrchestrator
                 File.Delete(actualOutFile);
             }
             File.Move(options.OutFile, actualOutFile);
+
+            // Also rename the source map file if it exists
+            var sourceMapFile = options.OutFile + ".map";
+            var actualSourceMapFile = actualOutFile + ".map";
+            if (File.Exists(sourceMapFile))
+            {
+                if (File.Exists(actualSourceMapFile))
+                {
+                    File.Delete(actualSourceMapFile);
+                }
+                File.Move(sourceMapFile, actualSourceMapFile);
+
+                // Update the sourceMappingURL comment in the CSS file to point to renamed map
+                // Note: esbuild URL-encodes the filename, so [hash] becomes %5Bhash%5D
+                var cssContent = File.ReadAllText(actualOutFile);
+                var oldMapName = Path.GetFileName(sourceMapFile);
+                var oldMapNameEncoded = Uri.EscapeDataString(oldMapName);
+                var newMapName = Path.GetFileName(actualSourceMapFile);
+                cssContent = cssContent.Replace($"/*# sourceMappingURL={oldMapName} */", $"/*# sourceMappingURL={newMapName} */");
+                cssContent = cssContent.Replace($"/*# sourceMappingURL={oldMapNameEncoded} */", $"/*# sourceMappingURL={newMapName} */");
+                File.WriteAllText(actualOutFile, cssContent);
+            }
         }
 
         return relativeUrl;
