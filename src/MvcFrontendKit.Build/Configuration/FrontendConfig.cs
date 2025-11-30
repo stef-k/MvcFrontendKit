@@ -58,6 +58,26 @@ public class FrontendConfig
 
     [YamlMember(Alias = "esbuild")]
     public EsbuildConfig Esbuild { get; set; } = new EsbuildConfig();
+
+    [YamlMember(Alias = "cdn")]
+    public CdnConfig? Cdn { get; set; }
+}
+
+public class CdnConfig
+{
+    /// <summary>
+    /// Base URL for CDN-hosted assets (e.g., "https://cdn.example.com/assets").
+    /// When set, manifest URLs will be prefixed with this base URL.
+    /// </summary>
+    [YamlMember(Alias = "baseUrl")]
+    public string? BaseUrl { get; set; }
+
+    /// <summary>
+    /// Whether to generate SRI (Subresource Integrity) hashes for script/link tags.
+    /// Default: false
+    /// </summary>
+    [YamlMember(Alias = "enableSri")]
+    public bool EnableSri { get; set; } = false;
 }
 
 public class AreaConfig
@@ -67,6 +87,13 @@ public class AreaConfig
 
     [YamlMember(Alias = "css")]
     public List<string> Css { get; set; } = new List<string>();
+
+    /// <summary>
+    /// When true, global JS/CSS will not be emitted for views in this area.
+    /// Use this for areas with completely different styling/frameworks.
+    /// </summary>
+    [YamlMember(Alias = "isolate")]
+    public bool Isolate { get; set; } = false;
 }
 
 public class OutputConfig

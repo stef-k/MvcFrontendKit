@@ -1,3 +1,13 @@
+Dart Sass
+=========
+
+Project: https://github.com/sass/dart-sass
+Website: https://sass-lang.com/
+
+The reference implementation of Sass, written in Dart.
+
+================================================================================
+
 Dart Sass license:
 
 Copyright (c) 2016, Google Inc.

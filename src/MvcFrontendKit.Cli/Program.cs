@@ -101,7 +101,8 @@ class Program
         Console.WriteLine("    --verbose     Show detailed compilation output");
         Console.WriteLine();
         Console.WriteLine("  build [options]");
-        Console.WriteLine("    Build frontend bundles for production.");
+        Console.WriteLine("    Build frontend bundles (same as 'dotnet publish -c Release' but standalone).");
+        Console.WriteLine("    Useful for CDN workflows where you need bundles before deploying.");
         Console.WriteLine("    --dry-run     Preview bundles without writing files");
         Console.WriteLine("    --verbose     Show detailed build output");
         Console.WriteLine();

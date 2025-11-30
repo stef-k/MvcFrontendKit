@@ -1155,10 +1155,19 @@ public class BundleOrchestrator
         // e.g., filePath = wwwroot/dist/js/global.xxx.js
         //       distDir  = wwwroot/dist
         //       relative = js/global.xxx.js
-        //       result   = /dist/js/global.xxx.js
+        //       result   = /dist/js/global.xxx.js (or CDN URL if configured)
         var distDir = Path.Combine(_projectRoot, _config.WebRoot, "dist");
         var relativePath = GetRelativePath(distDir, filePath);
-        return _config.DistUrlRoot.TrimEnd('/') + "/" + relativePath.Replace("\\", "/");
+        var localUrl = _config.DistUrlRoot.TrimEnd('/') + "/" + relativePath.Replace("\\", "/");
+
+        // If CDN is configured, prefix with CDN base URL
+        if (!string.IsNullOrEmpty(_config.Cdn?.BaseUrl))
+        {
+            var cdnBase = _config.Cdn.BaseUrl.TrimEnd('/');
+            return cdnBase + localUrl;
+        }
+
+        return localUrl;
     }
 
     // Helper for netstandard2.0 compatibility (Path.GetRelativePath not available)

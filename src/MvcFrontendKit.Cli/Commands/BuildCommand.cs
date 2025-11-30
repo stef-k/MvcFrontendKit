@@ -1,6 +1,9 @@
+using Microsoft.Extensions.Logging;
 using MvcFrontendKit.Configuration;
+using MvcFrontendKit.Build.Bundling;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using BuildConfig = MvcFrontendKit.Build.Configuration.FrontendConfig;
 
 namespace MvcFrontendKit.Cli.Commands;
 
@@ -32,7 +35,9 @@ public class BuildCommand
             }
             else
             {
-                return ExecuteBuild(config, verbose);
+                // Parse again with the Build config type for the orchestrator
+                var buildConfig = deserializer.Deserialize<BuildConfig>(yaml);
+                return ExecuteBuild(buildConfig, verbose);
             }
         }
         catch (Exception ex)
@@ -230,16 +235,86 @@ public class BuildCommand
         return 0;
     }
 
-    private static int ExecuteBuild(FrontendConfig config, bool verbose)
+    private static int ExecuteBuild(BuildConfig config, bool verbose)
     {
         Console.WriteLine("Building frontend bundles...");
         Console.WriteLine();
-        Console.WriteLine("Note: For production builds, use 'dotnet publish -c Release'");
-        Console.WriteLine("      which integrates with MSBuild and runs esbuild automatically.");
-        Console.WriteLine();
-        Console.WriteLine("This command is primarily for dry-run previews.");
-        Console.WriteLine("Use: dotnet frontend build --dry-run");
-        return 0;
+
+        var projectRoot = Directory.GetCurrentDirectory();
+        var logLevel = verbose ? LogLevel.Debug : LogLevel.Information;
+        var logger = new ConsoleLogger("MvcFrontendKit", logLevel);
+
+        var orchestrator = new BundleOrchestrator(config, projectRoot, logger);
+
+        try
+        {
+            var success = orchestrator.BuildBundlesAsync().GetAwaiter().GetResult();
+
+            if (success)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Build completed successfully!");
+                Console.WriteLine($"  Output: {config.WebRoot}/dist/");
+                Console.WriteLine($"  Manifest: {config.WebRoot}/frontend.manifest.json");
+                return 0;
+            }
+            else
+            {
+                Console.Error.WriteLine("Build failed. Check the output above for errors.");
+                return 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Build failed: {ex.Message}");
+            if (verbose)
+            {
+                Console.Error.WriteLine(ex.StackTrace);
+            }
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// Simple console logger implementation for CLI use.
+    /// </summary>
+    private class ConsoleLogger : ILogger
+    {
+        private readonly string _name;
+        private readonly LogLevel _minLevel;
+
+        public ConsoleLogger(string name, LogLevel minLevel)
+        {
+            _name = name;
+            _minLevel = minLevel;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= _minLevel;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (!IsEnabled(logLevel)) return;
+
+            var message = formatter(state, exception);
+            var prefix = logLevel switch
+            {
+                LogLevel.Debug => "  [DBG]",
+                LogLevel.Information => "  [INF]",
+                LogLevel.Warning => "  [WRN]",
+                LogLevel.Error => "  [ERR]",
+                _ => "  "
+            };
+
+            var output = logLevel >= LogLevel.Warning ? Console.Error : Console.Out;
+            output.WriteLine($"{prefix} {message}");
+
+            if (exception != null && logLevel >= LogLevel.Warning)
+            {
+                output.WriteLine($"       {exception.Message}");
+            }
+        }
     }
 
     private static Dictionary<string, string> DiscoverViewsByConvention(string jsRoot, List<ViewConvention> conventions)

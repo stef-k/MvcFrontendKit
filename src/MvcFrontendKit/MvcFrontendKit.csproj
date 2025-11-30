@@ -4,10 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.26</Version>
+    <Version>1.0.0-preview.27</Version>
     <Authors>stef-k</Authors>
-    <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications using esbuild</Description>
-    <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend</PackageTags>
+    <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications. Uses esbuild for JS/TS bundling and Dart Sass for SCSS compilation.</Description>
+    <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;sass;scss;typescript;frontend</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/stef-k/MvcFrontendKit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/stef-k/MvcFrontendKit</PackageProjectUrl>
@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
     <None Include="build\**\*" Pack="true" PackagePath="build\" />
     <None Include="buildMultiTargeting\**\*" Pack="true" PackagePath="buildMultiTargeting\" />
     <None Include="runtimes\**\*" Pack="true" PackagePath="runtimes\" />

@@ -434,8 +434,10 @@ dotnet frontend check --verbose # Detailed output
 dotnet frontend check --all     # Check all discoverable views
 dotnet frontend check --view "Areas/Admin/Settings/Index"  # Diagnose specific view
 
-# Build preview (dry-run)
+# Build bundles (standalone, useful for CDN workflows)
+dotnet frontend build           # Build to wwwroot/dist/
 dotnet frontend build --dry-run # Preview bundles without building
+dotnet frontend build --verbose # Show detailed build output
 ```
 
 ### Development Compilation (`dev`)
@@ -625,6 +627,20 @@ areas:
       - wwwroot/js/Areas/Admin/admin.ts
     css:
       - wwwroot/css/Areas/Admin/admin.scss
+    isolate: false   # When true, global JS/CSS is NOT emitted for this area
+```
+
+**Area Isolation:**
+When `isolate: true` is set for an area, `@Html.FrontendGlobalStyles()` and `@Html.FrontendGlobalScripts()` will return empty for views in that area. This is useful for areas with completely different styling or JavaScript frameworks (e.g., a separate admin panel with its own design system).
+
+```yaml
+areas:
+  Admin:
+    isolate: true    # Global assets skipped for Admin area
+    js:
+      - wwwroot/js/Areas/Admin/admin-framework.ts
+    css:
+      - wwwroot/css/Areas/Admin/admin-design-system.scss
 ```
 
 ### Import Maps (Dev)
@@ -674,6 +690,25 @@ esbuild:
 **jsFormat options:**
 - `iife` (default): Wraps bundle in `(function(){...})();` - works with regular `<script>` tags
 - `esm`: Preserves ES module syntax - requires `type="module"` on script tags
+
+### CDN Configuration
+
+```yaml
+cdn:
+  baseUrl: "https://cdn.example.com/assets"  # CDN base URL for asset URLs
+  enableSri: false                            # Enable SRI hashes (future)
+```
+
+When `cdn.baseUrl` is set:
+- Manifest URLs are prefixed with the CDN base URL
+- Example: `/dist/js/global.abc123.js` becomes `https://cdn.example.com/assets/dist/js/global.abc123.js`
+
+**CDN Workflow:**
+1. Run `dotnet frontend build` to generate bundles in `wwwroot/dist/`
+2. Upload the `dist/` folder contents to your CDN
+3. Set `cdn.baseUrl` in config to match your CDN URL
+4. Rebuild to update manifest with CDN URLs
+5. Deploy your app - HTML helpers will emit CDN URLs
 
 ---
 
@@ -790,3 +825,22 @@ Pull requests should:
 
 - Keep public APIs consistent with the spec
 - Include tests where it makes sense
+
+---
+
+## Acknowledgments
+
+MvcFrontendKit is built on the shoulders of these excellent open-source projects:
+
+- **[esbuild](https://esbuild.github.io/)** by Evan Wallace ([GitHub](https://github.com/evanw/esbuild)) - An extremely fast JavaScript/TypeScript bundler
+- **[Dart Sass](https://sass-lang.com/)** by Google and the Sass team ([GitHub](https://github.com/sass/dart-sass)) - The reference implementation of Sass
+
+Both tools are bundled as native binaries, requiring no Node.js installation.
+
+See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for full license information.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details

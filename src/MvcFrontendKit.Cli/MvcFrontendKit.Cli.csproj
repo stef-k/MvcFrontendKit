@@ -7,10 +7,10 @@
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-frontend</ToolCommandName>
-    <Version>1.0.0-preview.26</Version>
+    <Version>1.0.0-preview.27</Version>
     <Authors>stef-k</Authors>
-    <Description>CLI tool for MvcFrontendKit - init config and check assets</Description>
-    <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;frontend;cli</PackageTags>
+    <Description>CLI tool for MvcFrontendKit - compile TypeScript/SCSS during development, validate config and check assets. Uses esbuild and Dart Sass.</Description>
+    <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;sass;scss;typescript;frontend;cli</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/stef-k/MvcFrontendKit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/stef-k/MvcFrontendKit</PackageProjectUrl>
@@ -20,10 +20,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MvcFrontendKit\MvcFrontendKit.csproj" />
+    <ProjectReference Include="..\MvcFrontendKit.Build\MvcFrontendKit.Build.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

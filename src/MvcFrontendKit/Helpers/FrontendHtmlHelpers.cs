@@ -66,6 +66,14 @@ public static class FrontendHtmlHelpers
         var config = configProvider.GetConfig();
         var isDev = IsDevelopment(environment);
 
+        // Check if current area is isolated
+        if (IsAreaIsolated(html.ViewContext, config))
+        {
+            return isDev
+                ? new HtmlString($"<!-- MvcFrontendKit:FrontendGlobalStyles - Skipped (Area '{ViewKeyResolver.ResolveAreaName(html.ViewContext)}' is isolated) -->")
+                : HtmlString.Empty;
+        }
+
         if (manifest != null)
         {
             var cssFiles = manifest.GlobalCss;
@@ -155,6 +163,14 @@ public static class FrontendHtmlHelpers
         var manifest = manifestProvider.GetManifest();
         var config = configProvider.GetConfig();
         var isDev = IsDevelopment(environment);
+
+        // Check if current area is isolated
+        if (IsAreaIsolated(html.ViewContext, config))
+        {
+            return isDev
+                ? new HtmlString($"<!-- MvcFrontendKit:FrontendGlobalScripts - Skipped (Area '{ViewKeyResolver.ResolveAreaName(html.ViewContext)}' is isolated) -->")
+                : HtmlString.Empty;
+        }
 
         if (manifest != null)
         {
@@ -420,6 +436,29 @@ public static class FrontendHtmlHelpers
     private static bool IsDevelopment(Microsoft.AspNetCore.Hosting.IWebHostEnvironment environment)
     {
         return environment.EnvironmentName.Equals("Development", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Checks if the current view is in an isolated area.
+    /// Isolated areas do not receive global JS/CSS.
+    /// </summary>
+    private static bool IsAreaIsolated(ViewContext viewContext, FrontendConfig config)
+    {
+        var areaName = ViewKeyResolver.ResolveAreaName(viewContext);
+
+        // "Root" means no area, so not isolated
+        if (areaName == "Root")
+        {
+            return false;
+        }
+
+        // Check if this area is configured and has isolate: true
+        if (config.Areas.TryGetValue(areaName, out var areaConfig))
+        {
+            return areaConfig.Isolate;
+        }
+
+        return false;
     }
 
     private static IHtmlContent WrapWithDebugComments(string helperName, string summary, List<string>? files, IHtmlContent content)
