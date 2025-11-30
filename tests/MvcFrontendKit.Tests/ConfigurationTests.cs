@@ -283,4 +283,84 @@ global:
         Assert.Contains("wwwroot/js/app.js", config.Global.Js);
         Assert.Contains("wwwroot/css/main.css", config.Global.Css);
     }
+
+    [Fact]
+    public void CanDeserializeCdnConfig()
+    {
+        var yaml = @"
+configVersion: 1
+cdn:
+  baseUrl: https://cdn.example.com/assets
+";
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+        var config = deserializer.Deserialize<FrontendConfig>(yaml);
+
+        Assert.NotNull(config.Cdn);
+        Assert.Equal("https://cdn.example.com/assets", config.Cdn.BaseUrl);
+    }
+
+    [Fact]
+    public void CdnConfigIsNullByDefault()
+    {
+        var config = new FrontendConfig();
+
+        Assert.Null(config.Cdn);
+    }
+
+    [Fact]
+    public void CanDeserializeAreasWithIsolate()
+    {
+        var yaml = @"
+configVersion: 1
+areas:
+  Admin:
+    js:
+      - wwwroot/js/Areas/Admin/admin.js
+    css:
+      - wwwroot/css/Areas/Admin/admin.css
+    isolate: true
+  Public:
+    js:
+      - wwwroot/js/Areas/Public/public.js
+    isolate: false
+";
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+        var config = deserializer.Deserialize<FrontendConfig>(yaml);
+
+        Assert.NotNull(config.Areas);
+        Assert.Equal(2, config.Areas.Count);
+
+        Assert.True(config.Areas.ContainsKey("Admin"));
+        Assert.True(config.Areas["Admin"].Isolate);
+        Assert.Single(config.Areas["Admin"].Js);
+        Assert.Single(config.Areas["Admin"].Css);
+
+        Assert.True(config.Areas.ContainsKey("Public"));
+        Assert.False(config.Areas["Public"].Isolate);
+    }
+
+    [Fact]
+    public void AreaIsolateDefaultsToFalse()
+    {
+        var yaml = @"
+configVersion: 1
+areas:
+  Admin:
+    js:
+      - wwwroot/js/Areas/Admin/admin.js
+";
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+
+        var config = deserializer.Deserialize<FrontendConfig>(yaml);
+
+        Assert.False(config.Areas["Admin"].Isolate);
+    }
 }

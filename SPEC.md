@@ -25,7 +25,7 @@ A small, .NET-native helper tool named **MvcFrontendKit** that:
 Out of scope (for this version):
 
 - Full SPA-style integration for Vue/React (dev servers, HMR).
-- CDN hosting, SRI hashes, and advanced incremental build caching (reserved as future extensions).
+- CDN base URL for manifest URLs (implemented), SRI hashes and advanced incremental build caching (reserved as future extensions).
 
 ### 1.1 Preprocessor Support (TypeScript & SCSS)
 
@@ -335,8 +335,27 @@ esbuild:
   # Whether to generate CSS sourcemaps in Prod.
   cssSourcemap: true
 
-  # Reserved for future options (e.g., cdnBaseUrl, bundle size thresholds).
-  # cdnBaseUrl: null
+# Area-specific configuration (optional).
+# Use this to customize per-area behavior or isolate areas from global assets.
+areas:
+  # Example: Admin area with its own assets
+  Admin:
+    js:
+      - wwwroot/js/Areas/Admin/admin.ts
+    css:
+      - wwwroot/css/Areas/Admin/admin.scss
+    # When true, global JS/CSS is NOT emitted for views in this area.
+    # Useful for areas with completely different styling or JS frameworks.
+    isolate: false
+
+# CDN configuration (optional).
+# When set, manifest URLs are prefixed with the CDN base URL.
+cdn:
+  # CDN base URL for asset URLs in the manifest.
+  # Example: "https://cdn.example.com/assets"
+  baseUrl: null
+  # Reserved for future: SRI hash generation
+  # enableSri: false
 ```
 
 #### 3.2.1 View keys & case rules
@@ -787,8 +806,11 @@ Projects migrating from:
 To keep room for future evolution:
 
 - `configVersion` — for evolving config schema.
-- Reserved top-level keys:
-  - `cdn` — for CDN hosting, SRI, and related features.
+- Implemented top-level keys:
+  - `cdn` — CDN base URL for manifest URLs (implemented in v1.0).
+  - `areas` — Area-specific configuration including isolation (implemented in v1.0).
+- Reserved for future:
+  - `cdn.enableSri` — SRI hash generation for CDN assets.
 
 These keys must not be reused for other semantics in this version, so they can be safely added in future versions.
 
