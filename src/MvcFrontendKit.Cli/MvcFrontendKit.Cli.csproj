@@ -32,4 +32,56 @@
     <EmbeddedResource Include="Templates\frontend.config.template.yaml" />
   </ItemGroup>
 
+  <!--
+    Include runtimes for the CLI tool.
+    When installed as a dotnet tool, these binaries must be available.
+    They're copied to the output directory alongside the tool assembly.
+
+    We explicitly list each platform to preserve the folder structure.
+  -->
+  <ItemGroup>
+    <!-- Win-x64 -->
+    <Content Include="..\MvcFrontendKit\runtimes\win-x64\**\*">
+      <Link>runtimes\win-x64\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <!-- Linux-x64 -->
+    <Content Include="..\MvcFrontendKit\runtimes\linux-x64\**\*">
+      <Link>runtimes\linux-x64\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <!-- Linux-arm64 -->
+    <Content Include="..\MvcFrontendKit\runtimes\linux-arm64\**\*">
+      <Link>runtimes\linux-arm64\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <!-- OSX-x64 -->
+    <Content Include="..\MvcFrontendKit\runtimes\osx-x64\**\*">
+      <Link>runtimes\osx-x64\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <!-- OSX-arm64 -->
+    <Content Include="..\MvcFrontendKit\runtimes\osx-arm64\**\*">
+      <Link>runtimes\osx-arm64\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <!-- README for runtimes folder -->
+    <Content Include="..\MvcFrontendKit\runtimes\README.md">
+      <Link>runtimes\README.md</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+  </ItemGroup>
+
 </Project>
