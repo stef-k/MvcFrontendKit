@@ -71,6 +71,7 @@ public class CheckCommand
             errors += CheckGlobalAssets(config, verbose, validateImports);
             errors += CheckViewOverrides(config, verbose, validateImports);
             errors += CheckComponents(config, verbose, validateImports);
+            errors += CheckAreas(config, verbose, validateImports);
 
             if (verbose)
             {
@@ -287,8 +288,12 @@ public class CheckCommand
 
         var discoveredViews = new Dictionary<string, DiscoveredView>(StringComparer.OrdinalIgnoreCase);
 
-        // Scan for JS files
-        var jsFiles = Directory.GetFiles(jsRoot, "*.js", SearchOption.AllDirectories);
+        // Scan for JS/TS files
+        var jsFiles = Directory.GetFiles(jsRoot, "*.*", SearchOption.AllDirectories)
+            .Where(f => f.EndsWith(".js", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+                        f.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
         foreach (var jsFile in jsFiles)
         {
             // Skip dist folder
@@ -479,26 +484,37 @@ public class CheckCommand
 
     private static string ResolveImportPath(string baseDir, string importPath)
     {
-        // Handle .js extension
-        var pathWithExt = importPath;
-        if (!importPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        // If already has an extension, use it directly
+        if (importPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase) ||
+            importPath.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+            importPath.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase))
         {
-            pathWithExt = importPath + ".js";
+            return Path.GetFullPath(Path.Combine(baseDir, importPath));
         }
 
-        var resolved = Path.GetFullPath(Path.Combine(baseDir, pathWithExt));
-
-        // Also try index.js for directory imports
-        if (!File.Exists(resolved) && !importPath.EndsWith(".js"))
+        // Try different extensions in order of preference
+        var extensions = new[] { ".ts", ".tsx", ".js" };
+        foreach (var ext in extensions)
         {
-            var indexPath = Path.GetFullPath(Path.Combine(baseDir, importPath, "index.js"));
+            var resolved = Path.GetFullPath(Path.Combine(baseDir, importPath + ext));
+            if (File.Exists(resolved))
+            {
+                return resolved;
+            }
+        }
+
+        // Try index files for directory imports
+        foreach (var ext in extensions)
+        {
+            var indexPath = Path.GetFullPath(Path.Combine(baseDir, importPath, "index" + ext));
             if (File.Exists(indexPath))
             {
                 return indexPath;
             }
         }
 
-        return resolved;
+        // Return default .ts path (will show as not found)
+        return Path.GetFullPath(Path.Combine(baseDir, importPath + ".ts"));
     }
 
     private static int CheckGlobalAssets(FrontendConfig config, bool verbose, bool validateImports)
@@ -691,6 +707,75 @@ public class CheckCommand
         return errors;
     }
 
+    private static int CheckAreas(FrontendConfig config, bool verbose, bool validateImports)
+    {
+        var errors = 0;
+
+        var areas = config.Areas ?? new Dictionary<string, AreaConfig>();
+
+        if (!areas.Any())
+        {
+            if (verbose)
+            {
+                Console.WriteLine("Areas: None");
+                Console.WriteLine();
+            }
+            return 0;
+        }
+
+        Console.WriteLine("Areas:");
+
+        foreach (var (areaName, areaConfig) in areas)
+        {
+            if (verbose)
+            {
+                var isolateText = areaConfig.Isolate ? " (isolated from global assets)" : "";
+                Console.WriteLine($"  {areaName}:{isolateText}");
+            }
+
+            var jsFiles = areaConfig?.Js ?? new List<string>();
+            var cssFiles = areaConfig?.Css ?? new List<string>();
+
+            foreach (var jsFile in jsFiles)
+            {
+                if (!File.Exists(jsFile))
+                {
+                    Console.WriteLine($"    ✗ JS not found: {jsFile}");
+                    errors++;
+                }
+                else
+                {
+                    if (verbose) Console.WriteLine($"    ✓ JS: {jsFile}");
+                    if (validateImports)
+                    {
+                        errors += ValidateImportsInFile(jsFile, verbose);
+                    }
+                }
+            }
+
+            foreach (var cssFile in cssFiles)
+            {
+                if (!File.Exists(cssFile))
+                {
+                    Console.WriteLine($"    ✗ CSS not found: {cssFile}");
+                    errors++;
+                }
+                else if (verbose)
+                {
+                    Console.WriteLine($"    ✓ CSS: {cssFile}");
+                }
+            }
+        }
+
+        if (errors == 0 && !verbose)
+        {
+            Console.WriteLine($"  ✓ {areas.Count} area(s)");
+        }
+
+        Console.WriteLine();
+        return errors;
+    }
+
     private static void PrintDetailedInfo(FrontendConfig config)
     {
         Console.WriteLine("Configuration Details:");
@@ -701,6 +786,29 @@ public class CheckCommand
         Console.WriteLine($"  CSS Allow Relative: {config.CssUrlPolicy?.AllowRelative ?? false}");
         Console.WriteLine($"  CSS Resolve Imports: {config.CssUrlPolicy?.ResolveImports ?? true}");
         Console.WriteLine($"  Clean Dist On Build: {config.Output?.CleanDistOnBuild ?? true}");
+
+        // CDN configuration
+        if (config.Cdn != null && !string.IsNullOrEmpty(config.Cdn.BaseUrl))
+        {
+            Console.WriteLine();
+            Console.WriteLine("CDN Configuration:");
+            Console.WriteLine($"  Base URL: {config.Cdn.BaseUrl}");
+        }
+
+        // Areas configuration
+        var areas = config.Areas ?? new Dictionary<string, AreaConfig>();
+        if (areas.Any())
+        {
+            Console.WriteLine();
+            Console.WriteLine("Areas:");
+            foreach (var (areaName, areaConfig) in areas)
+            {
+                var isolateText = areaConfig.Isolate ? " (isolated)" : "";
+                var jsCount = areaConfig.Js?.Count ?? 0;
+                var cssCount = areaConfig.Css?.Count ?? 0;
+                Console.WriteLine($"  {areaName}: {jsCount} JS, {cssCount} CSS{isolateText}");
+            }
+        }
 
         Console.WriteLine();
         Console.WriteLine("Esbuild Settings:");
@@ -868,13 +976,25 @@ public class CheckCommand
         var lowercase = action.ToLowerInvariant();
         var pascalCase = action;
 
+        // Include both .js and .ts/.tsx candidates
         return new List<string>
         {
+            // JavaScript
             Path.Combine(directory, $"{camelCase}.js"),
             Path.Combine(directory, $"{lowercase}.js"),
             Path.Combine(directory, $"{pascalCase}.js"),
             Path.Combine(directory, $"{camelCase}Page.js"),
             Path.Combine(directory, $"{lowercase}Page.js"),
+            // TypeScript
+            Path.Combine(directory, $"{camelCase}.ts"),
+            Path.Combine(directory, $"{lowercase}.ts"),
+            Path.Combine(directory, $"{pascalCase}.ts"),
+            Path.Combine(directory, $"{camelCase}Page.ts"),
+            Path.Combine(directory, $"{lowercase}Page.ts"),
+            // TypeScript JSX
+            Path.Combine(directory, $"{camelCase}.tsx"),
+            Path.Combine(directory, $"{lowercase}.tsx"),
+            Path.Combine(directory, $"{pascalCase}.tsx"),
         };
     }
 
@@ -888,12 +1008,21 @@ public class CheckCommand
     {
         var normalizedPath = jsPath.Replace("\\", "/");
 
-        // Remove .js extension
-        if (!normalizedPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        // Remove .js, .ts, or .tsx extension
+        string pathWithoutExt;
+        if (normalizedPath.EndsWith(".tsx", StringComparison.OrdinalIgnoreCase))
+        {
+            pathWithoutExt = normalizedPath.Substring(0, normalizedPath.Length - 4);
+        }
+        else if (normalizedPath.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ||
+                 normalizedPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+        {
+            pathWithoutExt = normalizedPath.Substring(0, normalizedPath.Length - 3);
+        }
+        else
         {
             return null;
         }
-        var pathWithoutExt = normalizedPath.Substring(0, normalizedPath.Length - 3);
 
         // Remove "Page" suffix if present
         if (pathWithoutExt.EndsWith("Page", StringComparison.OrdinalIgnoreCase))

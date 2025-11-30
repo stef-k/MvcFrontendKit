@@ -2,6 +2,21 @@
 # Schema version for future migration / breaking changes
 configVersion: 1
 
+# ============================================================================
+# TypeScript & SCSS Support
+# ============================================================================
+# MvcFrontendKit automatically compiles:
+#   - TypeScript (.ts, .tsx) via esbuild
+#   - SCSS/Sass (.scss, .sass) via Dart Sass
+# Just use .ts/.scss extensions in your file paths below - no config needed!
+#
+# CLI Commands:
+#   dotnet frontend dev    - One-time compile of TS/SCSS for development
+#   dotnet frontend build  - Production build with bundling and hashing
+#   dotnet frontend watch  - Watch mode for continuous compilation
+#   dotnet frontend check  - Validate configuration and assets
+# ============================================================================
+
 # JS bundling mode:
 # - single : single global JS bundle
 # - areas  : per-area JS bundles + site-wide bundle
@@ -56,12 +71,14 @@ importMap:
 # NOTE: In Dev mode, JS is loaded with type="module". To expose functions globally:
 #   window.myFunc = myFunc;  // Makes myFunc available everywhere
 # This is the recommended modern pattern and works in both Dev and Prod.
+#
+# Supports: .js, .ts, .tsx for scripts; .css, .scss, .sass for styles
 global:
   js:
-    - wwwroot/js/site.js
+    - wwwroot/js/site.js      # or site.ts for TypeScript
 
   css:
-    - wwwroot/css/site.css
+    - wwwroot/css/site.css    # or site.scss for SCSS
 
 # Per-view conventions and overrides
 views:
@@ -102,21 +119,40 @@ views:
     #     - "wwwroot/css/custom/admin-settings.css"
 
 # Shared components for partials/views
+# Use @Component("name") in views to include component assets
+# Supports: .js, .ts, .tsx for scripts; .css, .scss, .sass for styles
 components:
   # Example components (customize for your app):
   # calendar:
   #   js:
-  #     - "wwwroot/js/components/calendar.js"
+  #     - "wwwroot/js/components/calendar.ts"    # TypeScript supported
   #   css:
-  #     - "wwwroot/css/components/calendar.css"
+  #     - "wwwroot/css/components/calendar.scss" # SCSS supported
   #
   # datepicker:
   #   js:
-  #     - "wwwroot/js/components/datepicker.js"
+  #     - "wwwroot/js/components/datepicker.ts"
   #   css:
-  #     - "wwwroot/css/components/datepicker.css"
+  #     - "wwwroot/css/components/datepicker.scss"
   #   depends:
-  #     - "calendar"
+  #     - "calendar"  # Component dependencies (loaded first)
+
+# Area-specific configuration (for mode: areas or views)
+# Allows custom JS/CSS per area with optional isolation from global assets
+areas:
+  # Example area configuration:
+  # Admin:
+  #   js:
+  #     - "wwwroot/js/Areas/Admin/admin.ts"
+  #   css:
+  #     - "wwwroot/css/Areas/Admin/admin.scss"
+  #   isolate: false  # If true, global assets are NOT included in this area
+
+# CDN configuration (optional)
+# When set, manifest URLs will use this base URL instead of local paths
+cdn:
+  # Example: Uncomment to serve assets from a CDN
+  # baseUrl: "https://cdn.example.com/assets"
 
 # Esbuild tuning (optional, most projects use defaults)
 esbuild:
