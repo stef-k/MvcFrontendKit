@@ -11,9 +11,9 @@ configVersion: 1
 # Just use .ts/.scss extensions in your file paths below - no config needed!
 #
 # CLI Commands:
-#   dotnet frontend dev    - One-time compile of TS/SCSS for development
+#   dotnet frontend dev    - Compile TS/SCSS for development (once)
+#   dotnet frontend watch  - Compile and watch for changes
 #   dotnet frontend build  - Production build with bundling and hashing
-#   dotnet frontend watch  - Watch mode for continuous compilation
 #   dotnet frontend check  - Validate configuration and assets
 # ============================================================================
 

@@ -20,7 +20,7 @@ It wraps `esbuild` behind a simple `.NET + YAML` workflow:
 
 This is for ASP.NET devs who want modern bundling without committing to the full Node toolchain.
 
-> **Status:** v1.0.0-preview.x - Core implementation complete. Production-ready for early adopters. Expect breaking changes until v1.0.
+> **Status:** v1.0 - Production-ready.
 
 ## Installation
 
@@ -37,7 +37,7 @@ This is the only package required for both **runtime** and **production builds**
 
 ### 2. Install the CLI tool (optional)
 
-The CLI provides commands for development compilation, production builds, and diagnostics (`dev`, `build`, `init`, `check`):
+The CLI provides commands for development compilation, production builds, and diagnostics (`dev`, `watch`, `build`, `init`, `check`):
 
 ```bash
 # Global install (available everywhere)
@@ -49,7 +49,7 @@ dotnet tool install MvcFrontendKit.Cli
 ```
 
 > **Note:** The CLI is **not required** for production builds. Production bundling is handled automatically by MSBuild targets during `dotnet publish -c Release`. However, the CLI is useful for:
-> - Development: Compile TypeScript/SCSS on-the-fly with `dotnet frontend dev`
+> - Development: Compile TypeScript/SCSS with `dotnet frontend dev` or `dotnet frontend watch`
 > - Standalone builds: Build bundles without running MSBuild with `dotnet frontend build` (useful for CDN workflows)
 > - Diagnostics: Validate configuration and assets with `dotnet frontend check`
 
@@ -111,7 +111,7 @@ Add helpers to your `_Layout.cshtml` or equivalent:
   dotnet frontend dev
 
   # Or watch for changes (recommended)
-  dotnet frontend dev --watch
+  dotnet frontend watch
   ```
   Then run your app with `dotnet run` or `dotnet watch run`.
 
@@ -330,14 +330,14 @@ global:
 
 ### Development Workflow
 
-For development, use the `dev` command to compile TypeScript and SCSS files:
+For development, use the `dev` or `watch` command to compile TypeScript and SCSS files:
 
 ```bash
 # One-time compilation
 dotnet frontend dev
 
 # Watch mode (recommended)
-dotnet frontend dev --watch
+dotnet frontend watch
 ```
 
 This compiles your source files to `.js` and `.css` next to the originals, which are then served by the development helpers with cache-busting.
@@ -428,8 +428,11 @@ dotnet frontend init --force    # Overwrite existing
 
 # Compile TypeScript/SCSS for development
 dotnet frontend dev             # One-time compilation
-dotnet frontend dev --watch     # Watch mode with auto-recompile
 dotnet frontend dev --verbose   # Show detailed output
+
+# Watch for changes and recompile
+dotnet frontend watch           # Continuous watch mode
+dotnet frontend watch --verbose # Show detailed output
 
 # Validate configuration and assets
 dotnet frontend check           # Basic check
@@ -445,14 +448,11 @@ dotnet frontend build --verbose # Show detailed build output
 
 ### Development Compilation (`dev`)
 
-The `dev` command compiles TypeScript and SCSS files to JavaScript and CSS for development. This enables you to use TypeScript and SCSS without running production builds during development.
+The `dev` command compiles TypeScript and SCSS files to JavaScript and CSS for development (one-time).
 
 ```bash
 # Compile all TypeScript/SCSS files from frontend.config.yaml
 dotnet frontend dev
-
-# Watch for changes and recompile automatically
-dotnet frontend dev --watch
 
 # Show compilation details
 dotnet frontend dev --verbose
@@ -465,10 +465,18 @@ dotnet frontend dev --verbose
 - Output files are placed next to source files (e.g., `site.ts` → `site.js`)
 - Source maps are generated for debugging
 
-**Watch mode:**
+### Watch Mode (`watch`)
+
+The `watch` command compiles and then monitors for changes:
+
 ```bash
-dotnet frontend dev --watch
+# Start watching for changes
+dotnet frontend watch
+
+# With detailed output
+dotnet frontend watch --verbose
 ```
+
 - Monitors your `jsRoot` and `cssRoot` directories for changes
 - Automatically recompiles when `.ts`, `.tsx`, `.scss`, or `.sass` files change
 - Shows compilation results in real-time
@@ -480,12 +488,12 @@ dotnet frontend dev --watch
 dotnet watch run
 
 # Terminal 2: Watch and compile frontend assets
-dotnet frontend dev --watch
+dotnet frontend watch
 ```
 
 This gives you:
 - Hot reload for C# code (via `dotnet watch`)
-- Auto-compilation for TypeScript/SCSS (via `frontend dev --watch`)
+- Auto-compilation for TypeScript/SCSS (via `frontend watch`)
 - Browser refresh to see changes
 
 ### View Diagnostics (`--view` and `--all`)

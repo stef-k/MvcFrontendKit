@@ -22,10 +22,10 @@ A small, .NET-native helper tool named **MvcFrontendKit** that:
 - Adds **components** as reusable JS/CSS units for partials, with runtime deduplication.
 - Plays nicely with `dotnet run` / `dotnet watch` without introducing HMR or SPA-level complexity.
 
-Out of scope (for this version):
+Out of scope:
 
 - Full SPA-style integration for Vue/React (dev servers, HMR).
-- CDN base URL for manifest URLs (implemented), SRI hashes and advanced incremental build caching (reserved as future extensions).
+- SRI hashes and advanced incremental build caching (reserved as future extensions).
 
 ### 1.1 Preprocessor Support (TypeScript & SCSS)
 
@@ -105,8 +105,11 @@ This is a zero-config feature:
      - Subsequent calls to `FrontendInclude("...")` for the same component emit nothing.
 
 5. **CLI helper** (optional but recommended)
-   - `dotnet frontend init`
-   - `dotnet frontend check [--verbose]`
+   - `dotnet frontend init` — scaffold configuration
+   - `dotnet frontend check [--verbose]` — validate config and assets
+   - `dotnet frontend dev [--verbose]` — compile TS/SCSS for development (one-time)
+   - `dotnet frontend watch [--verbose]` — compile and watch for changes
+   - `dotnet frontend build [--dry-run] [--verbose]` — production build (standalone)
 
 > **No HMR**
 > This tool does not provide hot module replacement. JS/CSS changes require a normal browser refresh. It is compatible with `dotnet watch` for Razor recompilation, but does not hook into ASP.NET hot reload semantics.
@@ -774,13 +777,40 @@ This helper is optional and intended for development troubleshooting. It can saf
   - `global.js` / `global.css` paths.
   - `views.overrides[*].js` / `css` paths.
   - `components[*].js` / `css` paths.
+  - `areas[*].js` / `css` paths.
 - Checks CSS files in bundling scope:
   - Warns or errors on disallowed `../` URLs based on `cssUrlPolicy`.
 - With `--verbose`, additionally:
   - Prints mapping of view keys to Dev assets and Prod bundle keys.
   - Prints component graph (including `depends`) and warns about cycles.
-  - May optionally inspect esbuild’s module graph to warn about circular JS imports (while still allowing them).
+  - Displays CDN and areas configuration.
+  - May optionally inspect esbuild's module graph to warn about circular JS imports (while still allowing them).
   - Optionally warns if any predicted bundle exceeds a configurable size threshold (e.g., 500KB).
+
+### 10.3 `dotnet frontend dev [--verbose]`
+
+- Compiles TypeScript and SCSS files to JavaScript and CSS for development.
+- Reads `frontend.config.yaml` to find all TypeScript (`.ts`, `.tsx`) and SCSS (`.scss`, `.sass`) files.
+- Compiles TypeScript using esbuild's native TypeScript loader.
+- Compiles SCSS using the bundled Dart Sass compiler.
+- Output files are placed next to source files (e.g., `site.ts` → `site.js`).
+- Source maps are generated for debugging.
+- With `--verbose`, shows detailed compilation output for each file.
+
+### 10.4 `dotnet frontend watch [--verbose]`
+
+- Same as `dev`, but continues running and monitors for changes.
+- Watches `jsRoot` and `cssRoot` directories for file changes.
+- Automatically recompiles when `.ts`, `.tsx`, `.scss`, or `.sass` files are modified.
+- Shows compilation results in real-time.
+- Press `Ctrl+C` to stop watching.
+
+### 10.5 `dotnet frontend build [--dry-run] [--verbose]`
+
+- Performs a production build identical to what MSBuild targets do during `dotnet publish -c Release`.
+- Useful for CDN workflows where bundles need to be generated independently of the publish process.
+- With `--dry-run`, previews bundles without writing files.
+- With `--verbose`, shows detailed build output including bundle sizes.
 
 ---
 
@@ -853,7 +883,10 @@ The tool ships from v1 as two NuGet packages:
    - Strongly recommended for development and CI workflows.
    - Exposes the `frontend` command:
      - `dotnet frontend init` — scaffold a fully commented `frontend.config.yaml`.
-     - `dotnet frontend check [--verbose]` — validate config, discover assets, and report problems before a build/publish.
+     - `dotnet frontend check [--verbose]` — validate config, discover assets, and report problems.
+     - `dotnet frontend dev [--verbose]` — compile TypeScript/SCSS for development.
+     - `dotnet frontend watch [--verbose]` — compile and watch for changes.
+     - `dotnet frontend build [--dry-run] [--verbose]` — production build (standalone).
    - Shares the same core parsing / validation logic as the library (via a shared project or internal package) so semantics stay in sync.
 
 Versioning & compatibility:

@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.0-preview.29</Version>
+    <Version>1.0.0</Version>
     <Authors>stef-k</Authors>
     <Description>Node-free frontend bundling toolkit for ASP.NET Core MVC / Razor applications. Uses esbuild for JS/TS bundling and Dart Sass for SCSS compilation.</Description>
     <PackageTags>aspnetcore;mvc;razor;bundling;esbuild;sass;scss;typescript;frontend</PackageTags>

@@ -20,6 +20,7 @@ class Program
             "check" => HandleCheckCommand(args),
             "build" => HandleBuildCommand(args),
             "dev" => HandleDevCommand(args),
+            "watch" => HandleWatchCommand(args),
             "help" or "--help" or "-h" => ShowHelp(),
             "version" or "--version" or "-v" => ShowVersion(),
             _ => UnknownCommand(command)
@@ -32,6 +33,12 @@ class Program
         var watch = args.Contains("--watch") || args.Contains("-w");
 
         return DevCommand.Execute(verbose, watch);
+    }
+
+    static int HandleWatchCommand(string[] args)
+    {
+        var verbose = args.Contains("--verbose") || args.Contains("-v");
+        return DevCommand.Execute(verbose, watch: true);
     }
 
     static int HandleCheckCommand(string[] args)
@@ -68,7 +75,8 @@ class Program
         Console.WriteLine("Commands:");
         Console.WriteLine("  init            Create frontend.config.yaml with default settings");
         Console.WriteLine("  check           Validate config and check if assets exist");
-        Console.WriteLine("  dev             Compile TypeScript/SCSS for development");
+        Console.WriteLine("  dev             Compile TypeScript/SCSS for development (once)");
+        Console.WriteLine("  watch           Compile and watch for changes");
         Console.WriteLine("  build           Build frontend bundles (production)");
         Console.WriteLine("  help            Show this help message");
         Console.WriteLine("  version         Show version information");
@@ -96,8 +104,13 @@ class Program
         Console.WriteLine("    --skip-imports  Skip import path validation");
         Console.WriteLine();
         Console.WriteLine("  dev [options]");
-        Console.WriteLine("    Compile TypeScript and SCSS files for development.");
+        Console.WriteLine("    Compile TypeScript and SCSS files for development (one-time).");
         Console.WriteLine("    Creates .js files alongside .ts files, and .css files alongside .scss files.");
+        Console.WriteLine("    --verbose     Show detailed compilation output");
+        Console.WriteLine();
+        Console.WriteLine("  watch [options]");
+        Console.WriteLine("    Compile and watch for changes (continuous).");
+        Console.WriteLine("    Same as 'dev' but keeps running and recompiles on file changes.");
         Console.WriteLine("    --verbose     Show detailed compilation output");
         Console.WriteLine();
         Console.WriteLine("  build [options]");
@@ -108,9 +121,9 @@ class Program
         Console.WriteLine();
         Console.WriteLine("Workflow:");
         Console.WriteLine("  Development:");
-        Console.WriteLine("    1. Run 'dotnet frontend dev' to compile TS/SCSS to JS/CSS");
-        Console.WriteLine("    2. Run 'dotnet run' to start your app (serves raw JS/CSS files)");
-        Console.WriteLine("    3. After changes, re-run 'dotnet frontend dev'");
+        Console.WriteLine("    1. Run 'dotnet frontend watch' to compile and watch for changes");
+        Console.WriteLine("    2. In another terminal, run 'dotnet run' to start your app");
+        Console.WriteLine("    Or use 'dotnet frontend dev' for one-time compilation");
         Console.WriteLine();
         Console.WriteLine("  Production:");
         Console.WriteLine("    Run 'dotnet publish -c Release' which automatically:");
@@ -122,7 +135,7 @@ class Program
         Console.WriteLine("Examples:");
         Console.WriteLine("  dotnet frontend init");
         Console.WriteLine("  dotnet frontend dev");
-        Console.WriteLine("  dotnet frontend dev --verbose");
+        Console.WriteLine("  dotnet frontend watch");
         Console.WriteLine("  dotnet frontend check --all");
         Console.WriteLine("  dotnet frontend build --dry-run");
         return 0;
