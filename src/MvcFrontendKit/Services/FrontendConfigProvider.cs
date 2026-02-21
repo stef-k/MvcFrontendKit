@@ -51,7 +51,7 @@ public class FrontendConfigProvider : IFrontendConfigProvider, IDisposable
 
         if (!File.Exists(configPath))
         {
-            _logger.LogWarning(
+            _logger.LogDebug(
                 "Frontend config file not found at {ConfigPath}. Using default configuration. " +
                 "Run 'dotnet frontend init' to generate a config file.",
                 configPath);

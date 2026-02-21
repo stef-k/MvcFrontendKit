@@ -60,6 +60,8 @@ dotnet tool install MvcFrontendKit.Cli
 dotnet frontend init
 ```
 
+This also patches your `.csproj` to include `frontend.config.yaml` in `dotnet publish` output. If the `.csproj` cannot be found or patched automatically, the command prints instructions for adding the entry manually.
+
 If you don't have the CLI installed, you can copy the template from the [SPEC.md](SPEC.md#32-core-schema-overview) or let the MSBuild target auto-generate a default config on first build.
 
 ### 4. Register services in Program.cs

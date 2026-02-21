@@ -770,9 +770,14 @@ This helper is optional and intended for development troubleshooting. It can saf
 
 - Creates `frontend.config.yaml` if missing, using a template identical in structure and comments to Section 3.2.
 - Does not overwrite existing config unless `--force` is specified.
+- After writing the YAML file, automatically patches the `.csproj` to include `frontend.config.yaml` as a `<Content>` item with `CopyToPublishDirectory="PreserveNewest"`, ensuring it is included in `dotnet publish` output.
+- Finds the `.csproj` by scanning the current directory; skips patching if zero or more than one `.csproj` is found.
+- Checks for an existing Content item (case-insensitive) before adding; running `init --force` twice does not duplicate the item.
+- If `.csproj` patching fails for any reason, prints a warning with manual XML snippet instructions (does not fail the init command).
 
 ### 10.2 `dotnet frontend check [--verbose]`
 
+- Validates `.csproj` includes `frontend.config.yaml` as a Content item for publish output. Reports a warning (not an error) if missing, with fix instructions.
 - Loads YAML config and validates:
   - `global.js` / `global.css` paths.
   - `views.overrides[*].js` / `css` paths.

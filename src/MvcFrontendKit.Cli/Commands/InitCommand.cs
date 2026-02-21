@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Xml.Linq;
+using MvcFrontendKit.Cli.Helpers;
 
 namespace MvcFrontendKit.Cli.Commands;
 
@@ -28,6 +30,9 @@ public class InitCommand
             File.WriteAllText(configPath, template);
 
             Console.WriteLine($"✓ Created frontend.config.yaml at: {configPath}");
+
+            PatchCsproj(Directory.GetCurrentDirectory());
+
             Console.WriteLine();
             Console.WriteLine("Next steps:");
             Console.WriteLine("  1. Edit frontend.config.yaml to match your project structure");
@@ -41,6 +46,40 @@ public class InitCommand
         {
             Console.Error.WriteLine($"Error creating config file: {ex.Message}");
             return 1;
+        }
+    }
+
+    private static void PatchCsproj(string directory)
+    {
+        try
+        {
+            var csprojPath = CsprojHelper.FindCsprojFile(directory);
+            if (csprojPath == null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("⚠ Could not find a .csproj file to patch.");
+                Console.WriteLine("  Add the following to your .csproj manually to include the config in publish output:");
+                Console.WriteLine(CsprojHelper.GetManualXmlSnippet());
+                return;
+            }
+
+            var doc = XDocument.Load(csprojPath);
+
+            if (!CsprojHelper.AddConfigContentItem(doc))
+            {
+                Console.WriteLine($"✓ {Path.GetFileName(csprojPath)} already includes frontend.config.yaml");
+                return;
+            }
+
+            doc.Save(csprojPath);
+            Console.WriteLine($"✓ Added frontend.config.yaml to {Path.GetFileName(csprojPath)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"⚠ Could not patch .csproj: {ex.Message}");
+            Console.WriteLine("  Add the following to your .csproj manually:");
+            Console.WriteLine(CsprojHelper.GetManualXmlSnippet());
         }
     }
 
