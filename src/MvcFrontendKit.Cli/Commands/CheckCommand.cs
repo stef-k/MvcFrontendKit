@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using MvcFrontendKit.Cli.Helpers;
 using MvcFrontendKit.Configuration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -68,6 +70,7 @@ public class CheckCommand
             }
 
             // Standard check
+            warnings += CheckProjectFile(verbose);
             errors += CheckGlobalAssets(config, verbose, validateImports);
             errors += CheckViewOverrides(config, verbose, validateImports);
             errors += CheckComponents(config, verbose, validateImports);
@@ -99,6 +102,54 @@ public class CheckCommand
             Console.Error.WriteLine($"Error parsing config: {ex.Message}");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Checks whether the .csproj includes frontend.config.yaml as a Content item for publish output.
+    /// Returns 1 if warning issued, 0 otherwise.
+    /// </summary>
+    private static int CheckProjectFile(bool verbose)
+    {
+        var csprojPath = CsprojHelper.FindCsprojFile(Directory.GetCurrentDirectory());
+
+        if (csprojPath == null)
+        {
+            if (verbose)
+            {
+                Console.WriteLine("Project File:");
+                Console.WriteLine("  ⚠ No .csproj found (skipped)");
+                Console.WriteLine();
+            }
+            return 0;
+        }
+
+        Console.WriteLine("Project File:");
+
+        try
+        {
+            var doc = XDocument.Load(csprojPath);
+
+            if (CsprojHelper.HasConfigContentItem(doc))
+            {
+                Console.WriteLine($"  ✓ {Path.GetFileName(csprojPath)} includes frontend.config.yaml for publish");
+            }
+            else
+            {
+                Console.WriteLine($"  ⚠ {Path.GetFileName(csprojPath)} does not include frontend.config.yaml for publish");
+                Console.WriteLine("    Config file will not be included in 'dotnet publish' output.");
+                Console.WriteLine("    Fix: Run 'dotnet frontend init --force' or add manually:");
+                Console.WriteLine(CsprojHelper.GetManualXmlSnippet());
+                Console.WriteLine();
+                return 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  ⚠ Could not read {Path.GetFileName(csprojPath)}: {ex.Message}");
+        }
+
+        Console.WriteLine();
+        return 0;
     }
 
     /// <summary>

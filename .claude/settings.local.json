@@ -49,7 +49,18 @@
       "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.scss\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.css\" --no-source-map --no-charset)",
       "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" --help)",
       "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\site.scss:C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\site.css\" \"C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.scss:C:\\Users\\stef\\source\\repos\\TestKit\\wwwroot\\css\\components\\notification.css\" --no-source-map --no-charset)",
-      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"wwwroot/css/site.scss:wwwroot/css/test1.css\" \"wwwroot/css/Home/Index.scss:wwwroot/css/Home/test2.css\" --no-source-map --no-charset)"
+      "Bash(\"C:\\Users\\stef\\source\\repos\\MvcFrontendKit\\src\\MvcFrontendKit\\runtimes\\win-x64\\native\\sass.bat\" \"wwwroot/css/site.scss:wwwroot/css/test1.css\" \"wwwroot/css/Home/Index.scss:wwwroot/css/Home/test2.css\" --no-source-map --no-charset)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(dotnet publish:*)",
+      "Bash(curl:*)",
+      "Bash(git restore:*)",
+      "Bash(dotnet tool:*)",
+      "Bash(dotnet-frontend build:*)",
+      "Bash(unzip:*)",
+      "Bash(dotnet frontend dev:*)",
+      "Bash(timeout 5 dotnet frontend:*)",
+      "Bash(timeout 8 dotnet frontend dev:*)",
+      "Bash(timeout 5 dotnet run:*)"
     ],
     "deny": [],
     "ask": []
